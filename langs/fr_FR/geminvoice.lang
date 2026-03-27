@@ -1,0 +1,368 @@
+# Traduction française pour Geminvoice
+ModuleGeminvoiceName = Geminvoice
+ModuleGeminvoiceDesc = OCR Automatisé pour Factures Fournisseurs via Google Drive et Gemini AI
+GeminvoiceSetup = Configuration Geminvoice
+GeminvoiceSettings = Paramètres Geminvoice
+GEMINVOICE_GDRIVE_FOLDER_ID = ID du dossier Google Drive
+GEMINVOICE_GDRIVE_FOLDER_IDTooltip = ID du dossier où les factures fournisseurs sont déposées.
+GEMINVOICE_GEMINI_API_KEY = Clé API Google Gemini
+GEMINVOICE_GEMINI_API_KEYTooltip = Clé API pour le modèle IA Google Gemini (GCP). À garder confidentielle.
+GEMINVOICE_GDRIVE_AUTH_JSON = Compte de Service Google (JSON)
+GEMINVOICE_GDRIVE_AUTH_JSONTooltip = Collez ici le contenu complet du fichier JSON de votre clé de Compte de Service Google Cloud pour l'API Drive.
+GeminvoiceSaveSettings = Sauvegarder
+GeminvoiceSyncNow = Synchroniser Maintenant
+GeminvoiceAbout = À propos
+
+GeminvoiceSetupInstructionsTitle = Prérequis : Configuration sur Google Cloud Platform
+GeminvoiceSetupInstructions = Afin de permettre au module Geminvoice de lire vos factures depuis Google Drive et de les analyser avec l'Intelligence Artificielle de Google Gemini, vous devez suivre ces étapes :\n1. Créez un projet sur <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>.\n2. Activez les APIs "<b>Google Drive API</b>" et "<b>Generative Language API</b>" dans Bibliothèque d'API.\n3. Créez une "Clé API" (API Key) dans la section Identifiants. Renseignez cette clé dans le champ "Clé API Google Gemini" ci-dessous.\n4. Créez un "Compte de service" (Service Account), générez une clé au format JSON, et téléchargez-la. Ouvrez le fichier téléchargé et copiez tout son contenu (texte brut JSON) dans le champ "Compte de Service Google (JSON)" ci-dessous.\n5. Allez sur votre dossier "Scan Factures" dans Google Drive, cliquez sur "Partager", et ajoutez l'adresse email de votre Compte de service (qui termine par @votre-projet.iam.gserviceaccount.com) en lui donnant le rôle d'Éditeur.\n6. Copiez l'ID du dossier se trouvant dans la barre d'adresse (ex: google.com/drive/folders/<i>1ABC2DEF3GHI</i>) dans le champ "ID du dossier Google Drive".
+GeminvoiceGoogleSDKDesc = Le module nécessite les bibliothèques Google APIs Client (Google Drive, Generative Language). Elles doivent être installées dans le dossier <code>vendor/</code> du module via Composer.
+
+# Review Page
+GeminvoiceReviewInvoice = Révision de facture
+GeminvoiceReviewLines = Lignes de facture
+GeminvoiceCalculatedTotal = Total calculé des lignes
+GeminvoiceConsistencyOk = COHÉRENT (OK)
+GeminvoiceConsistencyError = ERREUR
+GeminvoiceWarningMismatch = Le total des lignes ne correspond pas au total de l'en-tête de facture.
+GeminvoiceMemorizeVendor = Mémoriser le fournisseur (Fallback)
+GeminvoiceMemorizeVendorTooltip = Retenir un compte global par défaut (utilisé si aucune règle de ligne ne correspond).
+GeminvoiceFinalValidation = Validation finale
+GeminvoiceValidateAndCreate = Valider et créer la facture Dolibarr
+GeminvoiceRejectInvoice = Rejeter cette facture
+GeminvoiceDocumentPreview = Aperçu du document
+GeminvoiceSplitLine = Diviser la ligne
+GeminvoiceDuplicateAccount = Appliquer ce compte à toutes les lignes
+
+# Badges
+GeminvoiceBadgeMemorized = Mémorisé
+GeminvoiceBadgeIA = Analyse IA
+GeminvoiceBadgeVendor = Compte Fournisseur
+GeminvoiceBadgeManual = Saisie Manuelle
+GeminvoiceBadgeParafiscal = Parafiscale
+
+# UI Tooltips & Labels
+GeminvoiceBackToList = Retour à la liste
+GeminvoiceProductAutoFill = auto-remplit TVA + compte
+GeminvoiceParafiscal = Parafiscale
+GeminvoiceToggleAll = Tout cocher / tout décocher
+GeminvoiceMemorize = Mémoriser
+GeminvoiceManualEntryTooltip = Saisie Manuelle : Aucun automatisme n'a trouvé de compte, saisie libre requise.
+GeminvoiceMemorizedRuleTooltip = Mémorisé : Ce compte a été appris lors d'une précédente validation pour cette description.
+GeminvoiceAISuggestionTooltip = Analyse IA : Ce compte a été suggéré par l'Intelligence Artificielle Gemini.
+GeminvoiceSupplierDefaultTooltip = Compte Fournisseur : Ce compte est le réglage par défaut mémorisé pour ce tiers.
+GeminvoiceMemorizeLineRule = Mémoriser ce code pour cette description
+GeminvoiceAddLine = Ajouter une ligne
+GeminvoiceSaveModifications = Sauvegarder les modifications
+GeminvoiceConfirmReject = Confirmer le rejet ?
+GeminvoiceInvoiceAlreadyProcessed = Cette facture a déjà été %s.
+GeminvoiceOpenPDF = Ouvrir le PDF
+GeminvoiceMemorizeVendorDescription = Retenir un compte global par défaut (utilisé si aucune règle de ligne ne correspond) :
+GeminvoiceLineCodesUsedForValidation = Les codes comptables sélectionnés <strong>par ligne</strong> dans le formulaire ci-dessus seront utilisés. Cochez "Mémoriser" sur chaque ligne pour les apprendre.
+
+# Setup Page
+GeminvoiceConnectionIndicators = Indicateurs de Connexion
+GeminvoiceGoogleSDKInstallation = Installation Google SDK
+GeminvoiceRunComposer = Lancer l'installation (composer install)
+GeminvoiceGeminiAPI = API Google Gemini (GCP)
+GeminvoiceGDriveSettings = Paramètres Google Drive
+GeminvoiceAIModel = Modèle d'IA Gemini
+GeminvoiceDefault = par défaut
+GeminvoiceRequiredForOCR = Requis pour l'OCR
+GeminvoiceSetupHelp = Aide à la configuration
+GeminvoiceErrorShellDisabled = La fonction shell_exec() est désactivée sur ce serveur PHP. L'installation automatique est impossible.
+GeminvoiceInstallResult = Résultat de l'installation :
+GeminvoiceInstallNoOutput = La tentative d'installation n'a retourné aucun message. Il est possible que <code>shell_exec</code> soit désactivé ou que <code>composer</code> ne soit pas trouvé dans le PATH de l'utilisateur PHP (%s). <br>Action recommandée : Exécutez <code>composer install</code> manuellement dans le dossier <code>%s</code>.
+GeminvoiceGoogleLibsDetected = Bibliothèques Google détectées.
+GeminvoiceGoogleLibsMissing = Bibliothèques Google ABSENTES !
+GeminvoiceGoogleLibsMissingHint = Par défaut, vous devez exécuter une installation via Composer.
+GeminvoiceEnabled = Activé
+GeminvoiceDisabledPHPRestriction = Désactivé (Restriction PHP)
+GeminvoiceSystemCommandsStatus = Status des commandes système (shell_exec) :
+GeminvoiceAlternativeTerminalInstall = Installation alternative via Terminal :
+GeminvoiceAlternativeTerminalInstallHint = Si le bouton automatique ci-dessous échoue (erreur 500 ou shell restreint), exécutez la commande suivante depuis la racine de votre installation Dolibarr :
+GeminvoiceConfirmComposerInstall = Voulez-vous tenter d'installer les dépendances via Composer ? Cela peut prendre quelques instants.
+GeminvoiceCronInstructions = Pour automatiser la récupération des factures, vous pouvez soit :
+GeminvoiceCronOption1 = 1. Activer le job <b>Geminvoice</b> dans le module <b>Tâches planifiées</b> de Dolibarr.
+GeminvoiceCronOption2 = 2. Ajouter manuellement une tâche Cron sur votre serveur avec la commande suivante :
+
+# Dashboard Page
+GeminvoiceDashboard = Tableau de bord Geminvoice
+GeminvoiceClearList = Vider la liste
+GeminvoiceRunManualSync = Lancer la synchronisation manuelle
+GeminvoiceSyncDescription = Va chercher les nouveaux fichiers sur Google Drive et les analyse via Gemini
+GeminvoiceSearch = Recherche
+GeminvoiceFileAndDate = Fichier / Date
+GeminvoiceVendorAndInvoice = Tiers / Facture
+GeminvoiceAmountHTAndTTC = Montant HT / TTC
+GeminvoicePending = En attente
+GeminvoiceValidated = Validée
+GeminvoiceRejected = Rejetée
+GeminvoiceError = Erreur
+GeminvoiceReview = Réviser
+GeminvoiceNoInvoiceFound = Aucune facture trouvée.
+GeminvoiceManualImportProcess = Processus d'Import Manuel
+GeminvoiceManualImportDescription = Cliquez sur le bouton ci-dessous pour analyser les nouvelles factures depuis votre dossier Google Drive. Elles seront mises en attente de validation avant d'être intégrées dans Dolibarr.
+GeminvoicePurgeErrors = Vider les erreurs
+GeminvoiceConfirmPurgeErrors = Vider toutes les erreurs ?
+GeminvoiceConfirmPurgeAll = Vider la liste ? Toutes les factures en attente et en erreur seront supprimées définitivement. Les factures déjà validées ou rejetées ne sont pas affectées.
+GeminvoicePurgeAllSuccess = Liste vidée. Toutes les factures en attente et en erreur ont été supprimées.
+GeminvoiceSyncInProgress = Synchronisation en cours... Analyse Gemini AI des fichiers Drive...
+GeminvoiceSyncWarning = Veuillez ne pas quitter ou rafraîchir la page (opération longue).
+GeminvoicePendingInvoices = Factures en attente de validation
+GeminvoiceFileName = Fichier
+GeminvoiceVendorName = Fournisseur
+GeminvoiceInvoiceNumber = N° Facture
+GeminvoiceDate = Date
+GeminvoiceTotalHT = Total HT
+GeminvoiceTotalTTC = Total TTC
+GeminvoiceDuplicate = Doublon ?
+GeminvoiceActions = Actions
+GeminvoiceAnalysisError = ERREUR D'ANALYSE
+GeminvoiceRetryAIAnalysis = Tenter une nouvelle analyse IA
+GeminvoiceRetry = Ré-essayer
+GeminvoiceConfirmDeleteError = Supprimer cette ligne d'erreur ?
+GeminvoiceInvoiceAlreadyRegistered = Facture %s déjà enregistrée
+GeminvoiceNoDuplicateDetected = Aucun doublon détecté
+GeminvoiceDuplicateDetectedReviewOrReject = Doublon détecté — révisez ou rejetez
+GeminvoiceDuplicatePDP = Facture %s déjà reçue via flux PDP (PDPConnectFR)
+GeminvoiceValidate = Valider
+GeminvoiceConfirmValidateWithoutReview = Valider sans révision ?
+GeminvoiceConfirmRejectInvoice = Rejeter cette facture ?
+GeminvoiceReject = Rejeter
+
+# Descriptor & Permissions
+GeminvoicePermissionRead = Lire les intégrations Geminvoice
+GeminvoicePermissionWrite = Créer/modifier la configuration et valider les factures
+GeminvoicePendingInvoicesMenu = Factures en attente
+GeminvoiceMappingsMenu = Gestion des Mappings
+GeminvoiceCronSync = Geminvoice - Sync Google Drive & Gemini
+GeminvoiceCronSyncDesc = Récupère les factures depuis Google Drive, les analyse via Gemini AI et les pousse en staging pour révision.
+
+# Mappings Page
+GeminvoiceMappingsManagement = Gestion des Mappings
+GeminvoiceAccountingMappingsManagement = Gestion des Mappings Comptables
+GeminvoiceLineRules = Règles par description
+GeminvoiceVendorMappings = Mappings fournisseurs
+GeminvoiceLineRulesLong = Règles par description de ligne
+GeminvoiceLineRulesHint = Ces règles permettent d'affecter un compte comptable automatiquement selon la description de la ligne de facture.
+GeminvoiceVendorMappingsHint = Code comptable global par fournisseur (priorité 3).
+GeminvoiceKeyword = Mot-clé
+GeminvoiceAccountingCode = Code comptable
+GeminvoiceVatForced = TVA forcée
+GeminvoiceParafiscal = Parafiscale
+GeminvoicePlaceholderKeyword = ex: honoraires vétérinaires
+GeminvoicePlaceholderAccountLine = ex: 622100
+GeminvoicePlaceholderAccountVendor = ex: 401000
+GeminvoicePlaceholderVat = TVA %%
+GeminvoicePlaceholderLabel = Libellé
+GeminvoiceNoRuleFound = Aucune règle trouvée.
+GeminvoiceNoVendorMappingFound = Aucun mapping fournisseur trouvé.
+GeminvoiceConfirmDeleteRule = Supprimer cette règle ?
+GeminvoiceConfirmDeleteVendorMapping = Supprimer ce mapping ?
+
+# Messages
+GeminvoiceRuleDeleted = Règle supprimée.
+GeminvoiceVendorMappingDeleted = Mapping fournisseur supprimé.
+GeminvoiceRuleSaved = Règle sauvegardée.
+GeminvoiceVendorMappingSaved = Mapping fournisseur sauvegardé.
+GeminvoiceErrorKeywordAndCodeRequired = Le mot-clé et le code comptable sont obligatoires.
+GeminvoiceErrorVendorAndCodeRequired = Le nom fournisseur et le code comptable sont obligatoires.
+GeminvoiceInvoicesAnalyzed = %s facture(s) analysées et mises en attente de validation.
+GeminvoiceFilesWithError = %s fichier(s) en erreur lors du traitement :
+GeminvoiceErrorTempDirNotWritable = Le dossier temporaire n'est pas accessible en écriture : %s
+GeminvoiceErrorStaging = Erreur staging (%s)
+GeminvoiceErrorAIAnalysis = Erreur analyse IA (%s)
+GeminvoiceErrorDownload = Erreur téléchargement (%s)
+GeminvoiceLineRulesMemorized = %s règle(s) de description mémorisée(s).
+GeminvoiceInvoiceCreated = Facture Dolibarr créée et validée (ID: %s).
+GeminvoiceInvoiceRejected = Facture rejetée.
+GeminvoiceErrorRecordNotFound = Enregistrement introuvable (ID: %s).
+GeminvoiceErrorValidationFailed = Erreur lors de la validation : %s
+GeminvoiceErrorRejectionFailed = Erreur lors du rejet : %s
+GeminvoiceErrorSaveFailed = Erreur lors de la sauvegarde : %s
+
+# Alpha12 — Clés manquantes et chaînes i18n
+GeminvoiceErrorDrive = Impossible de lister les fichiers depuis Google Drive.
+GeminvoiceInvoiceLines = Lignes de facture
+GeminvoiceNoNewFiles = Aucun nouveau fichier à traiter sur Google Drive.
+GeminvoicePurgeSuccess = Toutes les erreurs ont été supprimées.
+GeminvoiceErrorPurgeFailed = Erreur lors de la suppression : %s
+GeminvoiceRetrySuccess = Ré-analyse réussie. La facture est prête pour révision.
+GeminvoiceRetryFailed = La ré-analyse a encore échoué : %s
+GeminvoiceGeminiFailDetail = Détail de l'échec Gemini :
+GeminvoiceQuickValidateSuccess = Facture Dolibarr créée avec succès (ID: %s).
+
+# Alpha 13 — Recognition settings
+GeminvoiceRecognitionSettings = Reconnaissance produit
+GeminvoiceRecognitionMethods = Méthodes de reconnaissance
+GeminvoiceRecognitionTextMatchLabel = Reconnaissance textuelle (locale)
+GeminvoiceRecognitionTextMatchDesc = Compare les descriptions OCR aux produits et comptes comptables par similarité textuelle. Sans appel API, instantané.
+GeminvoiceRecognitionAILabel = Reconnaissance IA (Gemini)
+GeminvoiceRecognitionAIDesc = Utilise l'API Google Gemini pour suggérer des produits. Consomme des tokens API.
+GeminvoiceExperimental = expérimental
+GeminvoiceAutoMemorized = %s règle(s) mémorisée(s) automatiquement.
+GeminvoiceProductBadgeMemorized = Produit pré-sélectionné via une règle mémorisée
+GeminvoiceProductBadgeTextMatch = Correspondance textuelle (%s%% de confiance)
+GeminvoiceTextMatchAccountTooltip = Compte trouvé par correspondance textuelle (%s de confiance)
+GeminvoiceProductBadgeManual = Produit sélectionné manuellement
+GeminvoiceProductBadgeAI = Reconnaissance IA Gemini (%s%% de confiance)
+GeminvoiceRecognitionThreshold = Seuil de confiance textuelle
+GeminvoiceRecognitionThresholdDesc = Score minimum (0-100) en dessous duquel la reconnaissance IA est sollicitée si elle est activée.
+GeminvoiceRecognitionAIMaxCalls = Budget appels IA (par page)
+GeminvoiceRecognitionAIMaxCallsDesc = Nombre maximum d'appels Gemini AI par chargement de page de révision. Les lignes au-delà du budget utilisent la correspondance textuelle.
+GeminvoiceAIBudgetReached = Budget d'appels IA atteint (%s appels). Les lignes restantes ont été traitées sans IA — rechargez la page pour tenter de nouvelles analyses.
+GeminvoiceCurrencyMismatch = ⚠️ Devise détectée par l'OCR : <strong>%s</strong> — différente de la devise système (<strong>%s</strong>). Vérifiez les montants avant validation.
+GeminvoiceErrorEmptyLine = Ligne %s invalide ("%s") : quantité et prix unitaire sont tous les deux à zéro.
+
+# Alpha 16 — Multi-sources
+GeminvoiceSourceGdrive = Google Drive
+GeminvoiceSourceUpload = Import PDF / Image
+GeminvoiceSourceFacturx = Factur-X / XML structuré
+GeminvoiceSourceFacturxHint = PDF/A-3 avec XML embarqué ou fichier XML autonome (CII, UBL 2.1).
+GeminvoiceSource = Source
+GeminvoiceUploadAndAnalyze = Importer et analyser
+GeminvoiceImportFacturx = Importer Factur-X
+GeminvoiceNotConfigured = Non configuré
+GeminvoiceErrorMissingConfig = Configuration incomplète — clé API Gemini manquante.
+
+# Alpha 17 — Matching fournisseur & avoirs
+GeminvoiceVendorConfirmed = Fournisseur Dolibarr confirmé
+GeminvoiceVendorMatchTooltip = Correspondance trouvée : score %s%% (%s)
+GeminvoiceVendorMatchHint = Cliquez sur le badge pour confirmer ce tiers
+GeminvoiceVendorNotFound = Aucun tiers correspondant trouvé dans Dolibarr
+GeminvoiceVendorWillBeCreated = Sera créé automatiquement
+GeminvoiceIsCreditNote = Type document
+GeminvoiceIsCreditNoteLabel = Avoir fournisseur (note de crédit)
+GeminvoiceCreditNoteDetected = Avoir détecté par l'OCR
+
+# Documentation
+GeminvoiceDocsMenu = Documentation
+GeminvoiceDocumentation = Documentation Geminvoice
+GeminvoiceUserGuide = Guide Utilisateur
+GeminvoiceDocTabIntro = Introduction
+GeminvoiceDocTabSetup = Installation
+GeminvoiceDocTabSources = Sources
+GeminvoiceDocTabDashboard = Tableau de bord
+GeminvoiceDocTabReview = Révision
+GeminvoiceDocTabMappings = Apprentissage
+GeminvoiceDocTabErrors = Dépannage
+
+GeminvoiceDocIntroSummary = Bienvenue dans le centre d'aide de Geminvoice.
+GeminvoiceDocWhatIsIt = Qu'est-ce que Geminvoice ?
+GeminvoiceDocIntroDesc = Geminvoice est un module d'intelligence comptable piloté par IA pour Dolibarr. Il automatise l'affectation des codes comptables aux factures fournisseurs, quelle que soit leur source : PDFs via Google Drive, imports manuels, Factur-X structuré ou factures électroniques PDPConnectFR.
+GeminvoiceDocWorkflowTitle = Workflow standard
+GeminvoiceDocWorkflowStep1 = Import des documents (Google Drive, Upload, Factur-X ou PDPConnectFR)
+GeminvoiceDocWorkflowStep2 = Analyse automatique par OCR et Intelligence Artificielle (Google Gemini)
+GeminvoiceDocWorkflowStep3 = Révision humaine pour valider les lignes, les tiers et les taxes
+GeminvoiceDocWorkflowStep4 = Création de la facture Dolibarr finale en un clic
+
+GeminvoiceDocPrerequisites = Prérequis
+GeminvoiceDocPrereq1 = Un compte Google Cloud avec l'API Gemini activée
+GeminvoiceDocPrereq2 = Les dépendances Google installées via Composer (<code>composer install</code> dans le dossier du module) — uniquement pour la source Google Drive
+GeminvoiceDocPrereq3 = Les droits d'accès au module configurés pour vos utilisateurs (lecture et écriture)
+
+GeminvoiceDocSetupSummary = Cette section explique comment configurer le module pour la première fois et vérifier que les connexions sont opérationnelles.
+GeminvoiceDocSetupStepByStep = Étapes de configuration
+GeminvoiceDocSetupStep1 = Saisissez votre clé API Gemini — elle est indispensable pour toutes les sources (OCR, reconnaissance produit).
+GeminvoiceDocSetupStep2 = Pour activer la source Google Drive : ajoutez également le JSON du compte de service Google et l'ID du dossier Drive à surveiller. Partagez ce dossier avec l'adresse e-mail du compte de service.
+GeminvoiceDocSetupStep3 = Vérifiez les indicateurs de connexion — toutes les pastilles doivent être vertes avant le premier import.
+GeminvoiceDocSetupStep4 = Pour l'automatisation : activez la tâche planifiée Geminvoice dans le module Tâches planifiées de Dolibarr (fréquence recommandée : 1×/heure).
+GeminvoiceDocSetupWarning = Sans clé API Gemini valide, l'import OCR et la reconnaissance de produits sont intégralement désactivés. Ce n'est pas un paramètre optionnel.
+
+GeminvoiceDocIndicatorsTitle = Indicateurs de connexion
+GeminvoiceDocIndicatorsDesc = Sur la page de configuration, vérifiez que les pastilles sont au vert avant d'utiliser le module.
+GeminvoiceDocIndicatorComposer = Librairies Google (Composer) installées
+GeminvoiceDocIndicatorGemini = Clé API Gemini valide
+GeminvoiceDocIndicatorDrive = Accès Google Drive opérationnel (si source Drive configurée)
+
+GeminvoiceDocSourcesSummary = Geminvoice accepte trois modes d'alimentation en factures. Chaque mode adapté à un contexte différent — ils peuvent coexister.
+GeminvoiceDocSourcesSummaryV2 = Geminvoice accepte quatre modes d'alimentation en factures. Chaque mode est adapté à un contexte différent — ils peuvent coexister.
+GeminvoiceDocGdriveDesc = Le module surveille automatiquement un dossier Google Drive que vous définissez. Déposez un fichier PDF ou image dans ce dossier — il sera importé au prochain cycle (CRON ou synchronisation manuelle). Le fichier est marqué comme traité après analyse pour ne pas être reimporté.
+GeminvoiceDocGdriveNote = Nécessite le compte de service Google configuré dans le setup.
+GeminvoiceDocUploadDesc = Depuis le tableau de bord, utilisez le panneau "Import PDF / Image" pour déposer un ou plusieurs fichiers directement depuis votre ordinateur. L'analyse par Gemini AI démarre immédiatement.
+GeminvoiceDocFacturxDesc = Pour les factures au format Factur-X (standard européen EN 16931) ou ZUGFeRD : déposez le PDF/A-3 ou le fichier XML dans le panneau dédié. Aucun OCR n'est nécessaire — les données sont lues directement depuis le XML structuré embarqué, ce qui garantit une précision maximale.
+GeminvoiceDocFacturxNote = Factur-X est le format le plus rapide et le plus fiable. C'est également le format qui sera imposé par la réglementation française de facturation électronique (horizon 2026-2027).
+
+GeminvoiceDocDashboardSummary = Le tableau de bord est votre file d'attente. Il liste toutes les factures importées en attente de validation, en erreur ou déjà traitées.
+GeminvoiceDocListTitle = Comprendre la liste
+GeminvoiceDocListDesc = Chaque ligne représente une facture détectée. Les colonnes indiquent le fichier source, le fournisseur reconnu, le numéro et les montants extraits par l'OCR.
+GeminvoiceDocBadgeDesc = Badge coloré indiquant l'origine de la facture : Google Drive (bleu), Upload manuel (vert), Factur-X (violet).
+GeminvoiceDocDuplicateDesc = Alerte orange si un numéro de facture identique existe déjà chez ce fournisseur dans Dolibarr. À vérifier avant de valider.
+GeminvoiceDocActionsTitle = Actions disponibles
+GeminvoiceDocActionReview = Réviser — ouvre la page de révision complète pour vérifier chaque ligne.
+GeminvoiceDocActionValidate = Valider sans révision — crée la facture Dolibarr directement si vous faites confiance à l'OCR.
+GeminvoiceDocActionReject = Rejeter — écarte la facture définitivement (aucune création dans Dolibarr).
+GeminvoiceDocActionRetry = Réessayer — relance l'analyse IA sur un fichier en erreur.
+
+GeminvoiceDocReviewSummary = La page de révision est le cœur du module. Elle vous permet de vérifier, corriger et enrichir les données extraites avant de créer la facture Dolibarr.
+GeminvoiceDocReviewHeader = En-tête de la facture
+GeminvoiceDocReviewSocMatch = Le module recherche automatiquement le fournisseur dans Dolibarr par correspondance de nom (exacte puis approximative). Un badge indique le résultat : vert si la correspondance est fiable, orange si elle est approximative (cliquez pour confirmer), rouge si aucun tiers n'a été trouvé (un nouveau tiers sera créé).
+GeminvoiceDocReviewCreditNote = Si le document est un avoir fournisseur, cochez la case "Avoir fournisseur". L'OCR la détecte automatiquement dans la plupart des cas — vérifiez tout de même. Geminvoice créera alors un avoir Dolibarr (type 2) et non une facture standard.
+GeminvoiceDocReviewCurrencyWarning = Un bandeau orange s'affiche si la devise détectée par l'OCR diffère de la devise paramétrée dans Dolibarr. Vérifiez les montants avant de valider.
+GeminvoiceDocReviewTable = Tableau des lignes
+GeminvoiceDocReviewTableDesc = Chaque ligne extraite par l'OCR est affichée avec sa description, quantité, prix unitaire HT, taux de TVA, code comptable et produit Dolibarr associé.
+GeminvoiceDocBadgeLearned = 🧠 Mémorisé — ce code comptable (ou produit) a été appris lors d'une validation précédente pour cette même description de ligne.
+GeminvoiceDocBadgeText = 🔍 Textmatch — correspondance trouvée par similarité de texte entre la description OCR et le catalogue produits.
+GeminvoiceDocBadgeAI = 🤖 IA Gemini — le code ou produit a été suggéré par l'intelligence artificielle Gemini.
+GeminvoiceDocBadgeVendor = 🏢 Fournisseur — code comptable par défaut mémorisé pour ce fournisseur, utilisé en dernier recours.
+GeminvoiceDocBadgeManual = ✏️ Manuel — aucune suggestion automatique n'a été trouvée, saisie libre requise.
+GeminvoiceDocLineTools = Outils sur les lignes
+GeminvoiceDocLineSplit = ✂️ Diviser — scinde une ligne en deux. Utile si une ligne OCR regroupe deux natures différentes.
+GeminvoiceDocLineDuplicate = ⮟ Appliquer à toutes — propage le code comptable de cette ligne à toutes les autres lignes de la facture en un clic.
+GeminvoiceDocLineAdd = + Ajouter une ligne — insère manuellement une ligne supplémentaire non détectée par l'OCR.
+GeminvoiceDocLineMemorize = Case "Mémoriser" — cochez pour que Geminvoice retienne ce code comptable pour les prochaines factures du même libellé.
+GeminvoiceDocLineParafiscal = Case "Parafiscale" — à cocher pour les taxes de type TICPE, CVO, CRPV (TVA à 0 %%, traitement comptable spécifique).
+GeminvoiceDocLineInvert = Badge ⚠️ Inverser — apparaît sur les lignes dont la description contient "avoir", "remise", "rabais" avec un montant positif. Cliquez pour inverser le signe.
+GeminvoiceDocConsistency = Cohérence des totaux
+GeminvoiceDocConsistencyDesc = Le bas du tableau calcule en temps réel le total HT et TTC des lignes et le compare à l'en-tête OCR. Un badge COHÉRENT / ERREUR indique si les montants concordent. Une erreur de cohérence ne bloque pas la validation mais doit être justifiée.
+GeminvoiceDocValidation = Validation finale
+GeminvoiceDocValidationStep1 = Vérifiez le badge de cohérence (COHÉRENT recommandé).
+GeminvoiceDocValidationStep2 = Sélectionnez le compte comptable de secours fournisseur si nécessaire.
+GeminvoiceDocValidationStep3 = Cliquez sur "Valider et créer la facture Dolibarr" — la facture est créée en statut brouillon et le PDF source est archivé dans le DMS Dolibarr.
+
+GeminvoiceDocMappingsSummary = La page Mappings vous permet de consulter et gérer les règles que Geminvoice a apprises, ainsi que d'en créer manuellement.
+GeminvoiceDocMappingsTitle = Deux types de règles
+GeminvoiceDocMappingsLine = Règles par description de ligne — associent un mot-clé de libellé à un code comptable, un taux de TVA et un produit Dolibarr.
+GeminvoiceDocMappingsVendor = Mappings fournisseur — associent un fournisseur à un code comptable global utilisé en dernier recours sur toutes ses lignes.
+GeminvoiceDocMappingsAuto = Ces règles sont créées automatiquement à chaque validation si la case "Mémoriser" est cochée sur la ligne.
+GeminvoiceDocPriorityTitle = Chaîne de priorité complète (6 niveaux)
+GeminvoiceDocPriorityDesc = P1 🧠 Règle mémorisée → P2 🔍 Textmatch ≥ seuil → P3 🤖 IA Gemini (si activée) → P4 🔍 Textmatch meilleur effort → P5 📄 Suggestion OCR brute → P6 🏢 Code comptable fallback fournisseur
+
+GeminvoiceDocErrorsSummary = Cette section décrit les erreurs les plus fréquentes et comment les résoudre.
+GeminvoiceDocErrorsTypes = Types d'erreurs rencontrées
+GeminvoiceDocErrorOCR = Erreur d'analyse IA — l'OCR Gemini n'a pas pu extraire les données (scan de mauvaise qualité, document protégé, format non supporté). Action : cliquez sur "Réessayer" après avoir amélioré le fichier source, ou importez une version plus lisible.
+GeminvoiceDocErrorDrive = Erreur de téléchargement Drive — le module n'a pas pu accéder au fichier. Vérifiez que le compte de service a toujours accès au dossier Drive partagé, et que le JSON d'authentification est à jour dans la configuration.
+GeminvoiceDocErrorStaging = Erreur de staging — problème de base de données lors de l'enregistrement. Consultez les logs Dolibarr pour le détail.
+GeminvoiceDocErrorResolution = Pour tout diagnostic approfondi : Admin → Outils → Journaux (fichiers de log) ou activez le mode debug Dolibarr.
+GeminvoiceDocErrorPurge = Bouton "Vider les erreurs" — supprime toutes les entrées en erreur de la liste sans affecter les factures validées ou en attente.
+
+# Alpha 18 — Source PDPConnectFR
+GeminvoiceSourcePdp = PDPConnectFR (facturation électronique)
+GeminvoicePdpSyncNow = Importer les factures PDP
+GeminvoicePdpImported = %s facture(s) PDP importée(s) en staging.
+GeminvoicePdpNoNewInvoices = Aucune nouvelle facture PDP en attente.
+GeminvoicePdpRequiresPdpConnectFR = Nécessite le module PDPConnectFR actif.
+GeminvoicePdpDisabled = Source PDP désactivée — activez-la dans la configuration.
+GeminvoicePdpApplyAccounting = Appliquer les codes comptables
+GeminvoicePdpNoPreview = Facture structurée PDP — pas d'aperçu document.
+GeminvoicePdpViewInvoice = Voir la facture dans Dolibarr
+GeminvoiceLinkedInvoice = Facture liée
+GeminvoicePdpEligible = %s facture(s) PDP éligible(s) à l'import.
+GeminvoicePdpSettings = Paramètres PDPConnectFR
+GeminvoicePdpEnableLabel = Activer la source PDPConnectFR
+GeminvoicePdpEnableDesc = Permet d'importer les factures brouillon créées par PDPConnectFR pour enrichissement comptable (affectation des codes comptables via la cascade d'intelligence Geminvoice).
+GeminvoicePdpModuleStatus = Module PDPConnectFR
+
+# Alpha 18 — Documentation PDP
+GeminvoiceDocPdpDesc = Pour les factures importées via le module PDPConnectFR (facturation électronique française). Ces factures arrivent en brouillon dans Dolibarr mais sans codes comptables. Geminvoice applique sa cascade d'intelligence comptable (règles mémorisées, text-match, IA) pour affecter automatiquement les comptes aux lignes existantes.
+GeminvoiceDocPdpNote = Nécessite le module PDPConnectFR actif et la source PDP activée dans la configuration Geminvoice.
+GeminvoiceDocPdpDifference = Différence avec les autres sources
+GeminvoiceDocPdpDifferenceDesc = Contrairement aux sources Google Drive, Upload et Factur-X qui créent de nouvelles factures dans Dolibarr, la source PDP enrichit des factures déjà existantes. Geminvoice ne modifie que les codes comptables (fk_code_ventilation) sur les lignes — toutes les autres données (montants, quantités, tiers) restent inchangées.
+GeminvoiceDocReviewPdp = Spécificités PDP en révision
+GeminvoiceDocReviewPdpDesc = Lorsqu'une facture provient de la source PDP, la page de révision se comporte différemment :
+GeminvoiceDocReviewPdpReadonly = Les champs d'en-tête (fournisseur, numéro, date, montants) et de lignes (description, quantité, prix, TVA) sont en lecture seule — les données PDP sont immuables.
+GeminvoiceDocReviewPdpEditable = Seuls les codes comptables et les produits Dolibarr sont modifiables — c'est l'objet de l'enrichissement.
+GeminvoiceDocReviewPdpNoPreview = Pas d'aperçu PDF — un lien direct vers la facture Dolibarr existante est proposé à la place.
+GeminvoiceDocReviewPdpButton = Le bouton de validation s'intitule "Appliquer les codes comptables" au lieu de "Valider et créer la facture".
+GeminvoiceDocValidationStep3Pdp = Pour les factures PDP : cliquez sur "Appliquer les codes comptables" — les codes sont affectés aux lignes de la facture brouillon existante dans Dolibarr.
+GeminvoiceDocBadgeDescV2 = Badge coloré indiquant l'origine de la facture : Google Drive (bleu), Upload manuel (vert), Factur-X (violet), PDP (rouge).

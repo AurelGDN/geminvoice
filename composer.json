@@ -1,0 +1,9 @@
+{
+    "name": "geminvoice/geminvoice",
+    "description": "OCR Invoice scanner for Dolibarr with Gemini AI",
+    "type": "dolibarr-module",
+    "require": {
+        "google/apiclient": "^2.15"
+    },
+    "license": "GPL-3.0-or-later"
+}
