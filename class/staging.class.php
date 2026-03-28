@@ -321,6 +321,7 @@ class GeminvoiceStaging
         $this->db->begin();
         $sql = "UPDATE " . MAIN_DB_PREFIX . "geminvoice_staging SET " . implode(', ', $sets);
         $sql .= " WHERE rowid = " . $rowid;
+        $sql .= " AND entity IN (" . getEntity('geminvoice') . ")";
 
         $resql = $this->db->query($sql);
         if ($resql) {
@@ -464,6 +465,32 @@ class GeminvoiceStaging
         }
 
         return null;
+    }
+
+    /**
+     * Get the Google Drive view URL for this staging record.
+     *
+     * @return string URL or empty string if not a Drive file
+     */
+    public function getDriveViewUrl()
+    {
+        if (!empty($this->gdrive_file_id) && !in_array($this->gdrive_file_id, array('manual_upload', 'facturx_import'))) {
+            return 'https://drive.google.com/file/d/' . urlencode($this->gdrive_file_id) . '/view';
+        }
+        return '';
+    }
+
+    /**
+     * Get the Google Drive embeddable preview URL for this staging record.
+     *
+     * @return string URL or empty string if not a Drive file
+     */
+    public function getDrivePreviewUrl()
+    {
+        if (!empty($this->gdrive_file_id) && !in_array($this->gdrive_file_id, array('manual_upload', 'facturx_import'))) {
+            return 'https://drive.google.com/file/d/' . urlencode($this->gdrive_file_id) . '/preview';
+        }
+        return '';
     }
 
     /**

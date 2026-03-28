@@ -82,6 +82,7 @@ class modGeminvoice extends DolibarrModules
             array('GEMINVOICE_RECOGNITION_AI',                  'chaine', '0',  'Enable Gemini AI for product recognition (experimental)',         0, 'current', 0),
             array('GEMINVOICE_RECOGNITION_TEXTMATCH_THRESHOLD', 'chaine', '80', 'Min textmatch score (0-100) before calling Gemini AI recognition', 0, 'current', 0),
             array('GEMINVOICE_RECOGNITION_AI_MAX_CALLS',        'chaine', '3',  'Max Gemini AI recognition calls per page load (budget)',          0, 'current', 0),
+            array('GEMINVOICE_DOC_STORAGE',                    'chaine', 'local_copy', 'Document storage strategy: drive_only, local_copy, both',  0, 'current', 0),
         );
 
         // Dictionaries

@@ -87,6 +87,7 @@ class GeminvoiceSupplierMap
             $sql .= ", accounting_code = '" . $this->db->escape($accounting_code) . "'";
             $sql .= ", label = '" . $this->db->escape($label) . "'";
             $sql .= " WHERE rowid = " . (int) $rowid;
+            $sql .= " AND entity IN (" . getEntity('geminvoice') . ")";
         } else {
             $sql = "INSERT INTO " . MAIN_DB_PREFIX . "geminvoice_supplier_mapping";
             $sql .= " (entity, vendor_name, accounting_code, label, fk_user_creat, datec)";

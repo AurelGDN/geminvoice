@@ -131,7 +131,8 @@ class GdriveSource implements GeminvoiceSourceInterface
                 if ($extraction && !empty($extraction['vendor_name'])) {
                     $staging_id = $staging->create($file['id'], $file['name'], $local_path, $extraction, GeminvoiceStaging::STATUS_PENDING, '', 'gdrive');
                     if ($staging_id > 0) {
-                        $gdrive->markAsProcessed($file['id']);
+                        $invoice_date = !empty($extraction['date']) ? $extraction['date'] : null;
+                        $gdrive->markAsProcessed($file['id'], $invoice_date);
                         dol_syslog('Geminvoice GdriveSource: OK — ' . $file['name'] . ' → Staging ID=' . $staging_id, LOG_INFO);
                         $count_ok++;
                     } else {
@@ -145,9 +146,10 @@ class GdriveSource implements GeminvoiceSourceInterface
             }
 
             if ($error_msg) {
+                // Create an error staging record for UI visibility, but do NOT move the file in Drive.
+                // Leaving the file in place allows the next sync to retry (transient errors: API timeout, rate limit…).
                 $staging->create($file['id'], $file['name'], $local_path, array(), GeminvoiceStaging::STATUS_ERROR, $error_msg, 'gdrive');
-                $gdrive->markAsProcessed($file['id']);
-                dol_syslog('Geminvoice GdriveSource: ERREUR — ' . $file['name'] . ' : ' . $error_msg, LOG_ERR);
+                dol_syslog('Geminvoice GdriveSource: ERREUR — ' . $file['name'] . ' : ' . $error_msg . ' (fichier conservé pour retry)', LOG_ERR);
                 $errors[] = $file['name'] . ': ' . $error_msg;
             }
         }

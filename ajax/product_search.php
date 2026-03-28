@@ -34,7 +34,7 @@ if (empty($user->id) || $user->id <= 0) {
     exit(0);
 }
 
-if (empty($user->rights->geminvoice->read)) {
+if (!$user->hasRight('geminvoice', 'read')) {
     echo json_encode(array('results' => array(), 'error' => 'Forbidden'));
     exit(0);
 }

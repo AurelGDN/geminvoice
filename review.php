@@ -18,7 +18,7 @@ global $langs, $user, $conf, $db;
 
 $langs->loadLangs(array("geminvoice@geminvoice", "bills", "compta"));
 
-if (empty($user->rights->geminvoice->read)) accessforbidden();
+if (!$user->hasRight('geminvoice', 'read')) accessforbidden();
 
 dol_include_once('/geminvoice/class/staging.class.php');
 dol_include_once('/geminvoice/class/suppliermap.class.php');
@@ -43,13 +43,13 @@ if ($ret <= 0) {
 
 // CSRF check for all state-changing actions
 if (!empty($action) && in_array($action, array('save', 'validate_final', 'reject'))) {
-    if (GETPOST('token', 'alpha') !== $_SESSION['token']) {
+    if (GETPOST('token', 'alpha') !== currentToken()) {
         accessforbidden();
     }
 }
 
 // -- SAVE: persist editable fields + per-line codes back to staging, and memorize ticked lines
-if ($action == 'save' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'save' && $user->hasRight('geminvoice', 'write')) {
     $upd = array(
         'vendor_name'    => GETPOST('vendor_name', 'alphanohtml'),
         'invoice_number' => GETPOST('invoice_number', 'alphanohtml'),
@@ -127,7 +127,7 @@ if ($action == 'save' && !empty($user->rights->geminvoice->write)) {
 }
 
 // -- VALIDATE: create Dolibarr invoice + auto-memorize line rules
-if ($action == 'validate_final' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'validate_final' && $user->hasRight('geminvoice', 'write')) {
     // A15-4: Pre-validation — reject lines with qty=0 AND unit_price=0 (completely empty lines)
     $empty_line_error = false;
     foreach (($staging->json_data['lines'] ?? array()) as $li_idx => $li) {
@@ -200,7 +200,7 @@ if ($action == 'validate_final' && !empty($user->rights->geminvoice->write)) {
 }
 
 // -- REJECT
-if ($action == 'reject' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'reject' && $user->hasRight('geminvoice', 'write')) {
     if ($staging->reject($staging_id) > 0) {
         setEventMessages($langs->trans("GeminvoiceInvoiceRejected"), null, 'mesgs');
         header("Location: index.php");
@@ -366,7 +366,7 @@ if ($fk_soc_current > 0) {
     $badge_icon  = $vendor_match['score'] >= 90 ? '✅' : '🔍';
     print ' <span style="background:' . $badge_color . ';color:#fff;padding:2px 8px;border-radius:10px;font-size:0.82em;cursor:pointer;"'
         . ' title="' . $langs->trans("GeminvoiceVendorMatchTooltip", $vendor_match['score'], $vendor_match['method']) . '"'
-        . ' onclick="document.getElementById(\'fk_soc_hidden\').value=' . (int) $vendor_match['rowid'] . '; this.style.background=\'#27ae60\'; this.innerHTML=\'✅ ' . dol_escape_js($vendor_match['name']) . ' (confirmé)\';">'
+        . ' onclick="document.getElementById(\'fk_soc_hidden\').value=' . (int) $vendor_match['rowid'] . '; this.style.background=\'#27ae60\'; this.textContent=\'✅ ' . dol_escape_js($vendor_match['name']) . ' (confirmé)\';">'
         . $badge_icon . ' ' . dol_escape_htmltag($vendor_match['name']) . ' (' . $vendor_match['score'] . '%%)</span>';
     print ' <span style="font-size:0.8em;color:#7f8c8d;">' . $langs->trans("GeminvoiceVendorMatchHint") . '</span>';
 } else {
@@ -694,35 +694,68 @@ if ($staging->status == GeminvoiceStaging::STATUS_PENDING) {
     print '<div class="opacitymedium">' . $langs->trans("GeminvoiceInvoiceAlreadyProcessed", ($staging->status == GeminvoiceStaging::STATUS_VALIDATED ? $langs->trans("Validated") : $langs->trans("Rejected"))) . '</div>';
 }
 
-// ---- PDF / Document Preview
+// ---- PDF / Document Preview (storage-mode aware)
+$doc_storage_mode = getDolGlobalString('GEMINVOICE_DOC_STORAGE', 'local_copy');
+$has_local_file = !empty($staging->local_filepath) && file_exists($staging->local_filepath);
+$drive_view_url    = $staging->getDriveViewUrl();
+$drive_preview_url = $staging->getDrivePreviewUrl();
+$has_drive_link    = !empty($drive_view_url);
+
+print '<hr><h3>' . $langs->trans("GeminvoiceDocumentPreview") . '</h3>';
+
 if ($is_pdp) {
-    print '<hr><h3>' . $langs->trans("GeminvoiceDocumentPreview") . '</h3>';
     print '<div class="opacitymedium" style="font-size:0.9em;">';
     print '<i class="fa fa-plug paddingright" style="color:#e74c3c;"></i> ' . $langs->trans("GeminvoicePdpNoPreview");
     if (!empty($staging->fk_facture_fourn)) {
         print ' — <a href="' . DOL_URL_ROOT . '/fourn/facture/card.php?id=' . (int) $staging->fk_facture_fourn . '" target="_blank">' . $langs->trans("GeminvoicePdpViewInvoice") . '</a>';
     }
     print '</div>';
-} elseif (!empty($staging->local_filepath) && file_exists($staging->local_filepath)) {
-    $mime = @mime_content_type($staging->local_filepath);
-    print '<hr><h3>' . $langs->trans("GeminvoiceDocumentPreview") . '</h3>';
-
-    // Build the relative path from DOL_DATA_ROOT for document.php
-    $rel_path = ltrim(str_replace(DOL_DATA_ROOT, '', $staging->local_filepath), '/');
-
-    if ($mime === 'application/xml' || $mime === 'text/xml' || pathinfo($staging->local_filepath, PATHINFO_EXTENSION) === 'xml') {
-        // Factur-X: no inline preview — show structured data summary instead
-        print '<div class="info" style="font-size:0.9em;">';
-        print '<b>' . dol_escape_htmltag(basename($staging->local_filepath)) . '</b><br>';
-        print $langs->trans('GeminvoiceSourceFacturxHint');
+} else {
+    // Link to invoice documents tab if already validated
+    if ($staging->status == GeminvoiceStaging::STATUS_VALIDATED && !empty($staging->fk_facture_fourn)) {
+        print '<div style="margin-bottom:10px;">';
+        print '<a href="' . DOL_URL_ROOT . '/fourn/facture/document.php?id=' . (int) $staging->fk_facture_fourn . '" target="_blank" class="butAction">';
+        print $langs->trans("GeminvoiceViewInvoiceDocuments");
+        print '</a>';
         print '</div>';
-    } elseif ($mime === 'application/pdf') {
-        $doc_url = dol_buildpath('/document.php', 1) . '?modulepart=geminvoice&file=' . urlencode($rel_path);
-        print '<a href="' . $doc_url . '" target="_blank" class="butAction">📎 ' . $langs->trans("GeminvoiceOpenPDF") . '</a>';
-    } else {
-        // Image
-        $doc_url = dol_buildpath('/document.php', 1) . '?modulepart=geminvoice&file=' . urlencode($rel_path);
-        print '<img src="' . $doc_url . '" style="max-width:100%;">';
+    }
+
+    // Local file preview (modes: local_copy, both)
+    if ($has_local_file && in_array($doc_storage_mode, array('local_copy', 'both'))) {
+        $mime = @mime_content_type($staging->local_filepath);
+        $rel_path = ltrim(str_replace(DOL_DATA_ROOT, '', $staging->local_filepath), '/');
+
+        if ($mime === 'application/xml' || $mime === 'text/xml' || pathinfo($staging->local_filepath, PATHINFO_EXTENSION) === 'xml') {
+            print '<div class="info" style="font-size:0.9em;">';
+            print '<b>' . dol_escape_htmltag(basename($staging->local_filepath)) . '</b><br>';
+            print $langs->trans('GeminvoiceSourceFacturxHint');
+            print '</div>';
+        } elseif ($mime === 'application/pdf') {
+            $doc_url = dol_buildpath('/document.php', 1) . '?modulepart=geminvoice&file=' . urlencode($rel_path);
+            print '<a href="' . $doc_url . '" target="_blank" class="butAction">' . $langs->trans("GeminvoiceOpenPDF") . '</a>';
+        } else {
+            $doc_url = dol_buildpath('/document.php', 1) . '?modulepart=geminvoice&file=' . urlencode($rel_path);
+            print '<img src="' . $doc_url . '" style="max-width:100%;">';
+        }
+    }
+
+    // Google Drive preview (modes: drive_only, both)
+    if ($has_drive_link && in_array($doc_storage_mode, array('drive_only', 'both'))) {
+        if ($doc_storage_mode === 'both' && $has_local_file) {
+            print '<div style="margin-top:15px;">';
+        }
+        print '<iframe src="' . dol_escape_htmltag($drive_preview_url) . '" width="100%" height="600" style="border:1px solid #ddd; margin-top:10px;" allowfullscreen></iframe>';
+        print '<br><a href="' . dol_escape_htmltag($drive_view_url) . '" target="_blank" class="butAction" style="margin-top:5px;">';
+        print '<i class="fa fa-external-link paddingright"></i>' . $langs->trans("GeminvoiceOpenInDrive");
+        print '</a>';
+        if ($doc_storage_mode === 'both' && $has_local_file) {
+            print '</div>';
+        }
+    }
+
+    // Fallback: no preview available
+    if (!$has_local_file && !$has_drive_link) {
+        print '<div class="opacitymedium">' . $langs->trans("GeminvoiceNoPreviewAvailable") . '</div>';
     }
 }
 

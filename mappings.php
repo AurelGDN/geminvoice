@@ -17,7 +17,7 @@ global $langs, $user, $db, $conf;
 
 $langs->loadLangs(array("geminvoice@geminvoice", "admin"));
 
-if (empty($user->rights->geminvoice->read)) accessforbidden();
+if (!$user->hasRight('geminvoice', 'read')) accessforbidden();
 
 dol_include_once('/geminvoice/class/linemap.class.php');
 dol_include_once('/geminvoice/class/suppliermap.class.php');
@@ -26,16 +26,18 @@ $action  = GETPOST('action', 'aZ09');
 $section = GETPOST('section', 'alpha') ?: 'line'; // 'line' or 'vendor'
 $rowid   = GETPOST('rowid', 'int');
 
-// Load product catalogue for the line rules product dropdown
+// Load product catalogue only when on the "line" tab (not needed for vendor tab)
 $all_products = array();
-$sql_prod  = "SELECT rowid, ref, label FROM " . MAIN_DB_PREFIX . "product";
-$sql_prod .= " WHERE entity IN (" . getEntity('product') . ")";
-$sql_prod .= " AND tobuy = 1";
-$sql_prod .= " ORDER BY ref ASC";
-$resql_prod = $db->query($sql_prod);
-if ($resql_prod) {
-    while ($obj = $db->fetch_object($resql_prod)) {
-        $all_products[] = $obj;
+if ($section !== 'vendor') {
+    $sql_prod  = "SELECT rowid, ref, label FROM " . MAIN_DB_PREFIX . "product";
+    $sql_prod .= " WHERE entity IN (" . getEntity('product') . ")";
+    $sql_prod .= " AND tobuy = 1";
+    $sql_prod .= " ORDER BY ref ASC";
+    $resql_prod = $db->query($sql_prod);
+    if ($resql_prod) {
+        while ($obj = $db->fetch_object($resql_prod)) {
+            $all_products[] = $obj;
+        }
     }
 }
 
@@ -62,12 +64,12 @@ $search_vendor_name     = GETPOST('search_vendor_name', 'alphanohtml');
 
 // CSRF check for all state-changing actions
 $write_actions = array('delete_line', 'delete_vendor', 'save_line', 'save_vendor');
-if (in_array($action, $write_actions) && (GETPOST('token', 'alpha') !== $_SESSION['token'])) {
+if (in_array($action, $write_actions) && (GETPOST('token', 'alpha') !== currentToken())) {
     accessforbidden();
 }
 
 // Delete a line mapping
-if ($action == 'delete_line' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'delete_line' && $user->hasRight('geminvoice', 'write')) {
     $linemap = new GeminvoiceLineMap($db);
     if ($linemap->delete($rowid) > 0) {
         setEventMessages($langs->trans("GeminvoiceRuleDeleted"), null, 'mesgs');
@@ -77,7 +79,7 @@ if ($action == 'delete_line' && !empty($user->rights->geminvoice->write)) {
 }
 
 // Delete a vendor mapping
-if ($action == 'delete_vendor' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'delete_vendor' && $user->hasRight('geminvoice', 'write')) {
     $supmap = new GeminvoiceSupplierMap($db);
     if ($supmap->delete($rowid) > 0) {
         setEventMessages($langs->trans("GeminvoiceVendorMappingDeleted"), null, 'mesgs');
@@ -87,7 +89,7 @@ if ($action == 'delete_vendor' && !empty($user->rights->geminvoice->write)) {
 }
 
 // Save (Add or Update) a line mapping
-if ($action == 'save_line' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'save_line' && $user->hasRight('geminvoice', 'write')) {
     $keyword         = GETPOST('keyword', 'alphanohtml');
     $accounting_code = GETPOST('accounting_code', 'alphanohtml');
     $vat_raw         = GETPOST('vat_rate', 'alphanohtml');
@@ -111,7 +113,7 @@ if ($action == 'save_line' && !empty($user->rights->geminvoice->write)) {
 }
 
 // Save (Add or Update) a vendor mapping
-if ($action == 'save_vendor' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'save_vendor' && $user->hasRight('geminvoice', 'write')) {
     $vendor_name     = GETPOST('vendor_name', 'alphanohtml');
     $accounting_code = GETPOST('accounting_code', 'alphanohtml');
     $label           = GETPOST('label', 'alphanohtml');
@@ -169,7 +171,7 @@ if ($section == 'line') {
     print '<p class="opacitymedium">' . $langs->trans("GeminvoiceLineRulesHint") . '</p>';
 
     // Add/Edit form manually layouted for alignment
-    if (!empty($user->rights->geminvoice->write)) {
+    if ($user->hasRight('geminvoice', 'write')) {
         print '<form method="POST" action="mappings.php?section=line">';
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="save_line">';
@@ -207,7 +209,7 @@ if ($section == 'line') {
 
     $param = "&section=line&search_keyword=".urlencode($search_keyword ?? "")."&search_accounting_code=".urlencode($search_accounting_code ?? "")."&search_vat_rate=".urlencode($search_vat_rate ?? "");
     
-    print '<form action="'.$_SERVER["PHP_SELF"].'" method="GET">';
+    print '<form action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '" method="GET">';
     print '<input type="hidden" name="section" value="line">';
     print '<input type="hidden" name="page" value="'.(int)$page.'">';
 
@@ -245,7 +247,7 @@ if ($section == 'line') {
             print '</td>';
             print '<td class="center">' . ($r->is_parafiscal ? '🔵 Oui' : '—') . '</td>';
             print '<td class="center">';
-            if (!empty($user->rights->geminvoice->write)) {
+            if ($user->hasRight('geminvoice', 'write')) {
                 $link_param = $param . '&rowid=' . ((int) $r->rowid) . '&token=' . newToken();
                 print '<a href="mappings.php?action=edit_line' . $link_param . '">' . img_edit() . '</a> &nbsp; ';
                 print '<a class="butActionSmallDelete" href="mappings.php?action=delete_line' . $link_param . '" onclick="return confirm(\'' . $langs->trans("GeminvoiceConfirmDeleteRule") . '\');">' . img_delete() . '</a>';
@@ -281,7 +283,7 @@ if ($section == 'vendor') {
     print '<h3>' . $langs->trans("GeminvoiceVendorMappings") . '</h3>';
     print '<p class="opacitymedium">' . $langs->trans("GeminvoiceVendorMappingsHint") . '</p>';
 
-    if (!empty($user->rights->geminvoice->write)) {
+    if ($user->hasRight('geminvoice', 'write')) {
         print '<form method="POST" action="mappings.php?section=vendor">';
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="save_vendor">';
@@ -310,7 +312,7 @@ if ($section == 'vendor') {
 
     $param = "&section=vendor&search_vendor_name=".urlencode($search_vendor_name ?? "")."&search_accounting_code=".urlencode($search_accounting_code ?? "");
     
-    print '<form action="'.$_SERVER["PHP_SELF"].'" method="GET">';
+    print '<form action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '" method="GET">';
     print '<input type="hidden" name="section" value="vendor">';
     print '<input type="hidden" name="page" value="'.(int)$page.'">';
 
@@ -338,7 +340,7 @@ if ($section == 'vendor') {
             print '<td><strong>' . dol_escape_htmltag($v->accounting_code) . '</strong></td>';
             print '<td>' . dol_escape_htmltag($v->label) . '</td>';
             print '<td class="center">';
-            if (!empty($user->rights->geminvoice->write)) {
+            if ($user->hasRight('geminvoice', 'write')) {
                 $link_param = $param . '&rowid=' . ((int) $v->rowid) . '&token=' . newToken();
                 print '<a href="mappings.php?action=edit_vendor' . $link_param . '">' . img_edit() . '</a> &nbsp; ';
                 print '<a class="butActionSmallDelete" href="mappings.php?action=delete_vendor' . $link_param . '" onclick="return confirm(\'' . $langs->trans("GeminvoiceConfirmDeleteVendorMapping") . '\');">' . img_delete() . '</a>';

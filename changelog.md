@@ -2,6 +2,33 @@
 
 Toutes les évolutions majeures du module Geminvoice par phase de développement.
 
+## [Alpha 18] - 2026-03-28 (release candidate)
+
+### Sécurité
+- **XXE → LIBXML_NONET|LIBXML_NOENT** : `FacturxSource::parseXml()` protégée contre les attaques XML External Entity (SSRF + lecture fichiers serveur). Guard PHP < 8.0 inclus.
+- **CSRF** : Remplacement de `$_SESSION['token']` par `currentToken()` (helper Dolibarr officiel) sur toutes les pages d'action (`setup.php`, `index.php`, `review.php`, `mappings.php`). Correction incohérence strict/loose (`!=` vs `!==`).
+- **Prompt injection** : `GeminiRecognition::buildPrompt()` — description utilisateur sanitisée (strip caractères de contrôle, mots-clés d'instruction, troncature 250 chars). Suppression de `accounting_code` du prompt : le code comptable est désormais sourcé depuis la BDD (candidat validé par rowid), jamais depuis la réponse IA.
+- **XSS vendor name** : `review.php` badge fournisseur — `this.innerHTML` → `this.textContent` pour bloquer l'injection HTML via nom de fournisseur OCR.
+- **Scripts CLI sans auth** : `sync_invoices.php` et `migration_alpha6.php` — guard `php_sapi_name()` bloquant tout accès web (HTTP 403). `sync_invoices.php` corrigé aussi pour le path traversal via nom de fichier Drive (`dol_sanitizeFileName()`).
+- **Audit composer** : log `dol_syslog()` lors du déclenchement de `composer install` depuis l'admin (login + ID utilisateur tracés).
+- **XSS réfléchi** : `$_SERVER["PHP_SELF"]` wrappé dans `dol_escape_htmltag()` sur tous les attributs `action` de formulaire (`setup.php`, `mappings.php`).
+
+### Bugs corrigés
+- **`date()` sur string SQL** (`PdpSource`) : `date('Y-m-d', $inv->datef)` → `date('Y-m-d', $this->db->jdate($inv->datef))`. La colonne SQL date était passée directement à `date()`, produisant des dates ~1970.
+- **Facture partielle** (`mapper.class.php`) : Ajout d'un `break` dans la boucle `addline()` — en cas d'échec d'ajout de ligne, le traitement s'arrête immédiatement pour éviter la création d'une facture avec des lignes manquantes.
+- **SQL UPDATE direct sur `llx_facture_fourn_det`** (`mapper.class.php`) : `enrichExistingInvoice()` utilise désormais `SupplierInvoiceLine::fetch()` + `update()` (Active Record Dolibarr) au lieu d'un SQL brut, garantissant le déclenchement des hooks/triggers.
+- **Filtre multi-entity** : Ajout de `AND entity IN (getEntity(...))` sur tous les UPDATE de `staging.class.php`, `linemap.class.php`, `suppliermap.class.php`. Empêche la modification de données appartenant à une autre entité.
+- **GDrive retry** : Un fichier Drive n'est plus marqué « processed » en cas d'échec OCR/staging. Il reste dans le dossier source pour permettre une nouvelle tentative au prochain sync.
+- **PdpSource atomicité** : `create()` + `update(fk_facture_fourn)` enveloppés dans une même transaction (`begin()`/`commit()`/`rollback()`). Élimine le risque de staging orphelin.
+
+### Optimisation & qualité
+- **Cache fournisseurs** (`VendorMatcher`) : `loadSuppliers()` met en cache le résultat dans `$this->suppliers_cache` — une seule requête SQL par instance, même si `findMatch()` est appelé N fois dans un batch.
+- **`$user->hasRight()`** : Migration complète de l'ancien style `$user->rights->geminvoice->*` (38 occurrences) vers l'API moderne `$user->hasRight('geminvoice', 'read|write')` sur toutes les pages et classes. Résolution simultanée du bug de double-négation (`empty(...) === false`).
+- **Chargement conditionnel produits** (`mappings.php`) : Le catalogue produits n'est plus chargé sur l'onglet "Fournisseurs" où il est inutile.
+- **i18n GDrive** : Les 6 messages d'erreur hardcodés en français dans `gdrive.class.php` sont remplacés par des clés `$langs->trans()`. Nouvelles clés ajoutées dans `langs/fr_FR/geminvoice.lang` (`GeminvoiceErrorGDriveJsonInvalid`, `GeminvoiceErrorGDriveJsonMissing`, `GeminvoiceErrorGDriveLibMissing`, `GeminvoiceErrorGDriveListFiles`, `GeminvoiceErrorGDriveDownload`, `GeminvoiceErrorGDriveMarkProcessed`).
+
+---
+
 ## [Alpha 18] - 2026-03-27
 ### Source PDPConnectFR — Intelligence comptable universelle
 - **PdpSource** : Nouvelle source `class/sources/PdpSource.class.php` — importe les factures fournisseur brouillon créées par PDPConnectFR pour enrichissement comptable. Découverte via `llx_pdpconnectfr_extlinks`, staging avec `source='pdp'` et `fk_facture_fourn` pré-renseigné.

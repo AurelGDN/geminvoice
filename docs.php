@@ -20,7 +20,7 @@ global $langs, $user, $conf, $db;
 $langs->loadLangs(array("geminvoice@geminvoice", "admin", "help"));
 
 // Check access rights
-if (empty($user->rights->geminvoice->read)) accessforbidden();
+if (!$user->hasRight('geminvoice', 'read')) accessforbidden();
 
 $tab = GETPOST('tab', 'aZ09') ?: 'intro';
 

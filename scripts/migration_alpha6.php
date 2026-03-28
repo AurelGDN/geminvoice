@@ -1,4 +1,10 @@
 <?php
+// Block web-context access — this migration script must only run from the command line.
+if (!in_array(php_sapi_name(), array('cli', 'cgi', 'cgi-fcgi'), true)) {
+    header('HTTP/1.1 403 Forbidden');
+    die("Error: This script must be run from the command line.\n");
+}
+
 if (!defined('NOSESSION')) define('NOSESSION', '1');
 if (! $res && file_exists("../../../main.inc.php")) $res = @include "../../../main.inc.php";
 if (! $res && file_exists("../../../../main.inc.php")) $res = @include "../../../../main.inc.php";

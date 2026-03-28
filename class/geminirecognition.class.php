@@ -86,19 +86,26 @@ class GeminiRecognition
      */
     private function buildPrompt($description, array $candidates)
     {
+        // Sanitize description to prevent prompt injection: strip control characters,
+        // limit length, and remove prompt-structural patterns.
+        $safe_description = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string) $description);
+        $safe_description = preg_replace('/\b(Instructions?|Ignore|Forget|System|PROMPT)\b/i', '***', $safe_description);
+        $safe_description = mb_substr(trim($safe_description), 0, 250);
+
         $list = '';
         foreach ($candidates as $i => $c) {
-            $list .= ($i + 1) . '. rowid=' . $c->rowid
-                . ' | ref=' . $c->ref
-                . ' | label=' . $c->label
-                . ' | accounting_code=' . $c->accounting_code
+            $list .= ($i + 1) . '. rowid=' . (int) $c->rowid
+                . ' | ref=' . preg_replace('/[\x00-\x1F\x7F]/', '', (string) $c->ref)
+                . ' | label=' . preg_replace('/[\x00-\x1F\x7F]/', '', (string) $c->label)
                 . "\n";
+            // accounting_code is intentionally omitted from the prompt:
+            // the AI selects by rowid only; we retrieve the code from our DB (see parseResponse).
         }
 
         return <<<PROMPT
 You are an accounting assistant for a French company. You must identify the most appropriate product from a list based on an invoice line description.
 
-Invoice line description: "{$description}"
+Invoice line description: "{$safe_description}"
 
 Product candidates (pre-filtered by text similarity):
 {$list}
@@ -111,7 +118,6 @@ Instructions:
 Required JSON format:
 {
   "rowid": <integer, rowid of the selected candidate or 0 if no match>,
-  "accounting_code": "<accounting code of the selected candidate, or empty string>",
   "confidence": <integer 0-100, your confidence in this selection>,
   "reason": "<one short sentence explaining your choice in French>"
 }
@@ -201,9 +207,16 @@ PROMPT;
             return null;
         }
 
-        // Verify the rowid is actually one of the candidates (security check)
-        $valid_rowids = array_map(function ($c) { return $c->rowid; }, $candidates);
-        if (!in_array($rowid, $valid_rowids, true)) {
+        // Verify the rowid is actually one of the candidates and retrieve its data from our DB,
+        // not from the AI response (prevents prompt-injection from supplying arbitrary codes).
+        $matched_candidate = null;
+        foreach ($candidates as $c) {
+            if ((int) $c->rowid === $rowid) {
+                $matched_candidate = $c;
+                break;
+            }
+        }
+        if ($matched_candidate === null) {
             $this->error = 'Gemini returned unknown rowid: ' . $rowid;
             dol_syslog('Geminvoice GeminiRecognition: ' . $this->error, LOG_WARNING);
             return null;
@@ -211,7 +224,7 @@ PROMPT;
 
         return (object) array(
             'rowid'           => $rowid,
-            'accounting_code' => (string) ($json['accounting_code'] ?? ''),
+            'accounting_code' => (string) $matched_candidate->accounting_code, // sourced from DB, not AI
             'confidence'      => $confidence,
             'reason'          => (string) ($json['reason'] ?? ''),
             'from_cache'      => false,

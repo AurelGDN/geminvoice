@@ -7,6 +7,7 @@
 
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/fourn/class/fournisseur.facture.class.php';
+require_once DOL_DOCUMENT_ROOT . '/fourn/class/fournisseur.facture.ligne.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 dol_include_once('/geminvoice/class/linemap.class.php');
@@ -197,6 +198,7 @@ class GeminvoiceMapper
                         $error++;
                         $this->error = "Failed to add line '" . $desc . "': " . $inv->error;
                         dol_syslog("Geminvoice: " . $this->error, LOG_ERR);
+                        break; // Stop adding lines on first failure to prevent partial invoice
                     }
                 }
             }
@@ -212,18 +214,34 @@ class GeminvoiceMapper
                 }
             }
 
-            // 5. Attach PDF to the invoice document directory
-            if (!$error && file_exists($source_filepath)) {
-                $upload_dir = $conf->fournisseur->facture->dir_output . '/' . dol_sanitizeFileName($inv->ref);
+            // 5. Attach source document to invoice (conditional on storage mode)
+            $storage_mode = getDolGlobalString('GEMINVOICE_DOC_STORAGE', 'local_copy');
+            if (!$error && file_exists($source_filepath) && in_array($storage_mode, array('local_copy', 'both'))) {
+                $rel_dir = 'fournisseur/facture/' . get_exdir($inv->id, 2, 0, 0, $inv, 'invoice_supplier') . dol_sanitizeFileName($inv->ref);
+                $upload_dir = DOL_DATA_ROOT . '/' . $rel_dir;
                 if (!dol_is_dir($upload_dir)) {
                     dol_mkdir($upload_dir);
                 }
-                $dest_file = $upload_dir . '/' . dol_sanitizeFileName(basename($source_filepath));
+                $filename = dol_sanitizeFileName(basename($source_filepath));
+                $dest_file = $upload_dir . '/' . $filename;
 
                 $mime = mime_content_type($source_filepath);
                 if (in_array($mime, array('application/pdf', 'image/jpeg', 'image/png'))) {
                     $result_copy = dol_copy($source_filepath, $dest_file, 0, 1);
-                    if (!$result_copy) {
+                    if ($result_copy) {
+                        // Register in Dolibarr ECM for native document tab visibility
+                        require_once DOL_DOCUMENT_ROOT . '/ecm/class/ecmfiles.class.php';
+                        $ecmfile = new EcmFiles($this->db);
+                        $ecmfile->filepath = $rel_dir;
+                        $ecmfile->filename = $filename;
+                        $ecmfile->label = md5_file(dol_osencode($dest_file));
+                        $ecmfile->fullpath_orig = $source_filepath;
+                        $ecmfile->gen_or_uploaded = 'uploaded';
+                        $ecmfile->description = 'Imported by Geminvoice';
+                        $ecmfile->src_object_type = 'invoice_supplier';
+                        $ecmfile->src_object_id = $inv->id;
+                        $ecmfile->create($user);
+                    } else {
                         dol_syslog("Geminvoice: Failed to copy file to " . $dest_file, LOG_WARNING);
                     }
                 } else {
@@ -343,19 +361,21 @@ class GeminvoiceMapper
 
                     $fk_code_ventilation = $this->getAccountingAccountId($resolved_code);
 
-                    // UPDATE the existing line's accounting code
-                    $sql_upd = "UPDATE " . MAIN_DB_PREFIX . "facture_fourn_det";
-                    $sql_upd .= " SET fk_code_ventilation = " . (int) $fk_code_ventilation;
-                    if ($fk_product_id > 0) {
-                        $sql_upd .= ", fk_product = " . (int) $fk_product_id;
+                    // Use SupplierInvoiceLine Active Record so Dolibarr hooks/triggers fire properly
+                    $line_obj = new SupplierInvoiceLine($this->db);
+                    $res_fetch = $line_obj->fetch($det_rowid);
+                    if ($res_fetch <= 0 || (int) $line_obj->fk_facture_fourn !== (int) $fk_facture_fourn) {
+                        dol_syslog("Geminvoice: enrichExistingInvoice — det_rowid=" . $det_rowid . " fetch failed or invoice mismatch, skipping.", LOG_WARNING);
+                        continue;
                     }
-                    $sql_upd .= " WHERE rowid = " . $det_rowid;
-                    $sql_upd .= " AND fk_facture_fourn = " . (int) $fk_facture_fourn;
-
-                    $res_upd = $this->db->query($sql_upd);
-                    if (!$res_upd) {
+                    $line_obj->fk_code_ventilation = $fk_code_ventilation;
+                    if ($fk_product_id > 0) {
+                        $line_obj->fk_product = $fk_product_id;
+                    }
+                    $res_upd = $line_obj->update();
+                    if ($res_upd < 0) {
                         $error++;
-                        $this->error = "Failed to update line det_rowid=" . $det_rowid . ": " . $this->db->lasterror();
+                        $this->error = "Failed to update line det_rowid=" . $det_rowid . ": " . $line_obj->error;
                         dol_syslog("Geminvoice: " . $this->error, LOG_ERR);
                     } else {
                         dol_syslog("Geminvoice: enrichExistingInvoice — det_rowid=" . $det_rowid . " → fk_code_ventilation=" . $fk_code_ventilation . " (code=" . $resolved_code . ")", LOG_DEBUG);

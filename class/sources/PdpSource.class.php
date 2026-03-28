@@ -105,7 +105,7 @@ class PdpSource implements GeminvoiceSourceInterface
             $json_data = array(
                 'vendor_name'    => $inv->vendor_name,
                 'invoice_number' => $inv->ref_supplier ?: $inv->ref,
-                'date'           => date('Y-m-d', $inv->datef),
+                'date'           => !empty($inv->datef) ? date('Y-m-d', $this->db->jdate($inv->datef)) : '',
                 'total_ht'       => (float) $inv->total_ht,
                 'total_ttc'      => (float) $inv->total_ttc,
                 'currency'       => 'EUR',
@@ -126,18 +126,29 @@ class PdpSource implements GeminvoiceSourceInterface
             }
 
             $display_name = !empty($inv->ref_supplier) ? $inv->ref_supplier : $inv->ref;
+
+            // Wrap create + fk_facture_fourn update in a single transaction to avoid orphaned staging records
+            $this->db->begin();
             $staging_id = $staging->create($file_token, $display_name, '', $json_data, GeminvoiceStaging::STATUS_PENDING, '', GeminvoiceStaging::SOURCE_PDP);
 
             if ($staging_id > 0) {
                 // Set fk_facture_fourn immediately (links staging to existing invoice)
-                $staging->update($staging_id, array(
+                $upd_res = $staging->update($staging_id, array(
                     'fk_facture_fourn' => (int) $inv->rowid,
                 ));
-                dol_syslog("Geminvoice PdpSource: OK — Invoice ID=" . $inv->rowid . " (" . $display_name . ") → Staging ID=" . $staging_id, LOG_INFO);
-                $count_ok++;
+                if ($upd_res < 0) {
+                    $this->db->rollback();
+                    $errors[] = $display_name . ': erreur mise à jour fk_facture_fourn (' . $staging->error . ')';
+                    dol_syslog("Geminvoice PdpSource: rollback — fk_facture_fourn update failed for Invoice ID=" . $inv->rowid . ": " . $staging->error, LOG_ERR);
+                } else {
+                    $this->db->commit();
+                    dol_syslog("Geminvoice PdpSource: OK — Invoice ID=" . $inv->rowid . " (" . $display_name . ") → Staging ID=" . $staging_id, LOG_INFO);
+                    $count_ok++;
+                }
             } else {
+                $this->db->rollback();
                 $errors[] = $display_name . ': erreur staging (' . $staging->error . ')';
-                dol_syslog("Geminvoice PdpSource: erreur staging — Invoice ID=" . $inv->rowid . ": " . $staging->error, LOG_ERR);
+                dol_syslog("Geminvoice PdpSource: rollback — erreur staging Invoice ID=" . $inv->rowid . ": " . $staging->error, LOG_ERR);
             }
         }
 

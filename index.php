@@ -19,7 +19,7 @@ global $langs, $user, $conf, $db;
 $langs->loadLangs(array("geminvoice@geminvoice"));
 
 // Check access rights
-if (empty($user->rights->geminvoice->read)) accessforbidden();
+if (!$user->hasRight('geminvoice', 'read')) accessforbidden();
 
 $action = GETPOST('action', 'aZ09');
 
@@ -51,14 +51,14 @@ if (!empty($search_invoice_number)) $param .= '&search_invoice_number=' . urlenc
 
 // CSRF check for all state-changing actions
 if (!empty($action) && $action !== 'list') {
-    if (GETPOST('token', 'alpha') !== $_SESSION['token']) {
+    if (GETPOST('token', 'alpha') !== currentToken()) {
         accessforbidden();
     }
 }
 
 // ---- SYNC: Download from Google Drive, analyze with Gemini, push to STAGING ----
 if ($action == 'sync') {
-    if (empty($user->rights->geminvoice->write)) accessforbidden();
+    if (!$user->hasRight('geminvoice', 'write')) accessforbidden();
 
     dol_syslog("Geminvoice: Manual GDrive sync started", LOG_DEBUG);
     dol_include_once('/geminvoice/class/sources/GdriveSource.class.php');
@@ -81,7 +81,7 @@ if ($action == 'sync') {
 
 // ---- UPLOAD BATCH (PDF/images) ----
 if ($action == 'upload_batch') {
-    if (empty($user->rights->geminvoice->write)) accessforbidden();
+    if (!$user->hasRight('geminvoice', 'write')) accessforbidden();
 
     dol_include_once('/geminvoice/class/sources/UploadSource.class.php');
     $source = new UploadSource($db);
@@ -104,7 +104,7 @@ if ($action == 'upload_batch') {
 
 // ---- UPLOAD FACTUR-X (structured XML / PDF-A3) ----
 if ($action == 'upload_facturx') {
-    if (empty($user->rights->geminvoice->write)) accessforbidden();
+    if (!$user->hasRight('geminvoice', 'write')) accessforbidden();
 
     dol_include_once('/geminvoice/class/sources/FacturxSource.class.php');
     $source = new FacturxSource($db);
@@ -123,7 +123,7 @@ if ($action == 'upload_facturx') {
 
 // ---- SYNC PDP: Import eligible invoices from PDPConnectFR ----
 if ($action == 'sync_pdp') {
-    if (empty($user->rights->geminvoice->write)) accessforbidden();
+    if (!$user->hasRight('geminvoice', 'write')) accessforbidden();
 
     dol_include_once('/geminvoice/class/sources/PdpSource.class.php');
     $source = new PdpSource($db);
@@ -146,7 +146,7 @@ if ($action == 'sync_pdp') {
 }
 
 // ---- PURGE ALL (pending + errors) ----
-if ($action == 'purge_all' && !empty($user->rights->geminvoice->write)) {
+if ($action == 'purge_all' && $user->hasRight('geminvoice', 'write')) {
     dol_include_once('/geminvoice/class/staging.class.php');
     $staging = new GeminvoiceStaging($db);
     if ($staging->purgeAll() > 0) {
@@ -157,7 +157,7 @@ if ($action == 'purge_all' && !empty($user->rights->geminvoice->write)) {
 }
 
 // ---- PURGE ERRORS ----
-if ($action == 'purge_errors' && empty($user->rights->geminvoice->write) === false) {
+if ($action == 'purge_errors' && $user->hasRight('geminvoice', 'write')) {
     dol_include_once('/geminvoice/class/staging.class.php');
     $staging = new GeminvoiceStaging($db);
     if ($staging->purgeErrors() > 0) {
@@ -168,7 +168,7 @@ if ($action == 'purge_errors' && empty($user->rights->geminvoice->write) === fal
 }
 
 // ---- RETRY from list ----
-if ($action == 'retry' && empty($user->rights->geminvoice->write) === false) {
+if ($action == 'retry' && $user->hasRight('geminvoice', 'write')) {
     $staging_id = GETPOSTINT('id');
     dol_include_once('/geminvoice/class/staging.class.php');
     dol_include_once('/geminvoice/class/gemini.class.php');
@@ -202,7 +202,7 @@ if ($action == 'retry' && empty($user->rights->geminvoice->write) === false) {
 }
 
 // ---- QUICK VALIDATE from list ----
-if ($action == 'validate' && empty($user->rights->geminvoice->write) === false) {
+if ($action == 'validate' && $user->hasRight('geminvoice', 'write')) {
     $staging_id = GETPOSTINT('id');
     dol_include_once('/geminvoice/class/staging.class.php');
     $staging    = new GeminvoiceStaging($db);
@@ -215,7 +215,7 @@ if ($action == 'validate' && empty($user->rights->geminvoice->write) === false) 
 }
 
 // ---- REJECT from list ----
-if ($action == 'reject' && empty($user->rights->geminvoice->write) === false) {
+if ($action == 'reject' && $user->hasRight('geminvoice', 'write')) {
     $staging_id = GETPOSTINT('id');
     dol_include_once('/geminvoice/class/staging.class.php');
     $staging = new GeminvoiceStaging($db);
@@ -246,7 +246,7 @@ $gdrive_src = new GdriveSource($db);
 $gdrive_configured = $gdrive_src->isConfigured();
 print '<div style="flex:1; min-width:240px; border:1px solid #d0d7de; border-radius:8px; padding:16px;">';
 print '<div style="font-weight:bold; margin-bottom:8px;"><i class="fa-brands fa-google-drive paddingright" style="color:#4285F4;"></i>' . $langs->trans('GeminvoiceSourceGdrive') . '</div>';
-if ($gdrive_configured && !empty($user->rights->geminvoice->write)) {
+if ($gdrive_configured && $user->hasRight('geminvoice', 'write')) {
     print '<a class="butAction" style="display:inline-block;" id="geminvoice-sync-btn" href="' . $_SERVER["PHP_SELF"] . '?action=sync&token=' . newToken() . '" onclick="startSync(this);">';
     print img_picto('', 'refresh', 'class="paddingright"') . $langs->trans("GeminvoiceRunManualSync");
     print '</a>';
@@ -263,7 +263,7 @@ dol_include_once('/geminvoice/class/sources/UploadSource.class.php');
 $upload_src = new UploadSource($db);
 print '<div style="flex:1; min-width:240px; border:1px solid #d0d7de; border-radius:8px; padding:16px;">';
 print '<div style="font-weight:bold; margin-bottom:8px;"><i class="fa fa-upload paddingright" style="color:#27ae60;"></i>' . $langs->trans('GeminvoiceSourceUpload') . '</div>';
-if ($upload_src->isEnabled() && !empty($user->rights->geminvoice->write)) {
+if ($upload_src->isEnabled() && $user->hasRight('geminvoice', 'write')) {
     print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '" enctype="multipart/form-data" style="margin:0;">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="upload_batch">';
@@ -282,7 +282,7 @@ dol_include_once('/geminvoice/class/sources/FacturxSource.class.php');
 $facturx_src = new FacturxSource($db);
 print '<div style="flex:1; min-width:240px; border:1px solid #d0d7de; border-radius:8px; padding:16px;">';
 print '<div style="font-weight:bold; margin-bottom:8px;"><i class="fa fa-file-invoice paddingright" style="color:#8e44ad;"></i>' . $langs->trans('GeminvoiceSourceFacturx') . '</div>';
-if (!empty($user->rights->geminvoice->write)) {
+if ($user->hasRight('geminvoice', 'write')) {
     print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '" enctype="multipart/form-data" style="margin:0;">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="upload_facturx">';
@@ -301,7 +301,7 @@ if (isModEnabled('pdpconnectfr')) {
     $pdp_src = new PdpSource($db);
     print '<div style="flex:1; min-width:240px; border:1px solid #d0d7de; border-radius:8px; padding:16px;">';
     print '<div style="font-weight:bold; margin-bottom:8px;"><i class="fa fa-plug paddingright" style="color:#e74c3c;"></i>' . $langs->trans('GeminvoiceSourcePdp') . '</div>';
-    if ($pdp_src->isEnabled() && !empty($user->rights->geminvoice->write)) {
+    if ($pdp_src->isEnabled() && $user->hasRight('geminvoice', 'write')) {
         $pdp_eligible = $pdp_src->countEligible();
         print '<a class="butAction" style="display:inline-block;" href="' . $_SERVER["PHP_SELF"] . '?action=sync_pdp&token=' . newToken() . '">';
         print img_picto('', 'refresh', 'class="paddingright"') . $langs->trans("GeminvoicePdpSyncNow");
@@ -322,7 +322,7 @@ if (isModEnabled('pdpconnectfr')) {
 print '</div>'; // end flex row
 
 // Management buttons (purge)
-if (!empty($user->rights->geminvoice->write)) {
+if ($user->hasRight('geminvoice', 'write')) {
     $total_pending = $staging->countAll(array('status' => array(GeminvoiceStaging::STATUS_PENDING, GeminvoiceStaging::STATUS_ERROR)));
     $error_count   = $staging->countAll(array('status' => GeminvoiceStaging::STATUS_ERROR));
     if ($total_pending > 0) {
@@ -423,7 +423,7 @@ if ($num > 0) {
         if ($row->status == GeminvoiceStaging::STATUS_ERROR) {
             print ' <td class="center" colspan="2">';
             print '<span style="background:#c0392b;color:#fff;padding:2px 10px;border-radius:10px;font-weight:bold;cursor:help;" title="'.dol_escape_htmltag($row->error_message).'">⚠️ ' . $langs->trans("GeminvoiceAnalysisError") . '</span>';
-            if (!empty($user->rights->geminvoice->write)) {
+            if ($user->hasRight('geminvoice', 'write')) {
                 print ' <a class="butActionSmall" href="' . $_SERVER["PHP_SELF"] . '?action=retry&id=' . ((int) $row->id) . '&token=' . newToken() . '" title="' . $langs->trans("GeminvoiceRetryAIAnalysis") . '">';
                 print img_picto('', 'refresh', 'style="color:#2980b9;"') . ' ' . $langs->trans("GeminvoiceRetry") . '</a>';
                 print ' <a href="' . $_SERVER["PHP_SELF"] . '?action=reject&id=' . ((int) $row->id) . '&token=' . newToken() . '" onclick="return confirm(\'' . $langs->trans("GeminvoiceConfirmDeleteError") . '\');" title="' . $langs->trans("Delete") . '">';
@@ -449,7 +449,7 @@ if ($num > 0) {
             print ' <td class="center">';
             print '<div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">';
             print '<a class="butActionSmall" href="review.php?id=' . ((int) $row->id) . '">' . img_picto('', 'edit') . ' ' . $langs->trans("GeminvoiceReview") . '</a>';
-            if (!empty($user->rights->geminvoice->write)) {
+            if ($user->hasRight('geminvoice', 'write')) {
                 if ($duplicate) {
                     print '<span class="butActionSmall" style="opacity:0.4;cursor:not-allowed;" title="' . $langs->trans("GeminvoiceDuplicateDetectedReviewOrReject") . '">' . img_picto('', 'tick') . ' ' . $langs->trans("GeminvoiceValidate") . '</span>';
                 } else {

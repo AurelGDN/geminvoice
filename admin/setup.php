@@ -19,7 +19,7 @@ global $langs, $user, $conf, $db;
 $langs->loadLangs(array("admin", "geminvoice@geminvoice"));
 
 // Check access rights
-if (!$user->admin && empty($user->rights->geminvoice->write)) accessforbidden();
+if (!$user->admin && !$user->hasRight('geminvoice', 'write')) accessforbidden();
 
 $action = GETPOST('action', 'aZ09');
 
@@ -37,7 +37,7 @@ $formParams = array(
 if ($action == 'update') {
     $error = 0;
 
-    if (GETPOST('token', 'alpha') !== $_SESSION['token']) {
+    if (GETPOST('token', 'alpha') !== currentToken()) {
         $error++;
         setEventMessages($langs->trans("ErrorToken"), null, 'errors');
     }
@@ -64,7 +64,7 @@ if ($action == 'update') {
 // Save recognition settings
 if ($action == 'update_recognition') {
     $error = 0;
-    if (GETPOST('token', 'alpha') !== $_SESSION['token']) {
+    if (GETPOST('token', 'alpha') !== currentToken()) {
         $error++;
         setEventMessages($langs->trans("ErrorToken"), null, 'errors');
     }
@@ -80,8 +80,8 @@ if ($action == 'update_recognition') {
 }
 
 // ACTION: Run composer install
-if ($action == 'composer_install' && !empty($user->rights->geminvoice->write)) {
-    if (GETPOST('token', 'alpha') != $_SESSION['token']) {
+if ($action == 'composer_install' && $user->hasRight('geminvoice', 'write')) {
+    if (GETPOST('token', 'alpha') !== currentToken()) {
         accessforbidden();
     }
 
@@ -89,6 +89,7 @@ if ($action == 'composer_install' && !empty($user->rights->geminvoice->write)) {
     @ini_set('memory_limit', '1024M');
 
     $moduledir = dol_buildpath('/geminvoice', 0);
+    dol_syslog('Geminvoice: composer install triggered by user ' . $user->login . ' (id=' . $user->id . ')', LOG_NOTICE);
 
     $composer_bin = 'composer';
     if (function_exists('shell_exec')) {
@@ -178,7 +179,7 @@ print dol_get_fiche_head($head, 'settings', $langs->trans("ModuleGeminvoiceName"
 // =====================================================================
 print load_fiche_titre($langs->trans("GeminvoiceGeminiAPI") . ' &amp; ' . $langs->trans("GeminvoiceGDriveSettings"), '', 'title_setup');
 
-print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
+print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="update">';
 
@@ -261,7 +262,7 @@ if (!$shell_ok) {
 print '</div>';
 
 print '<div class="center" style="margin-top:10px;">';
-if (!empty($user->rights->geminvoice->write)) {
+if ($user->hasRight('geminvoice', 'write')) {
     print '<a class="butAction" href="setup.php?action=composer_install&token=' . newToken() . '" onclick="return confirm(\'' . dol_escape_js($langs->trans("GeminvoiceConfirmComposerInstall")) . '\');">';
     print '📦 ' . $langs->trans("GeminvoiceRunComposer");
     print '</a>';
@@ -345,7 +346,7 @@ $recognition_ai_max_calls = isset($conf->global->GEMINVOICE_RECOGNITION_AI_MAX_C
     ? (int) $conf->global->GEMINVOICE_RECOGNITION_AI_MAX_CALLS
     : 3;
 
-print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
+print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="update_recognition">';
 
@@ -387,7 +388,56 @@ print '</div>';
 print '</form>';
 
 // =====================================================================
-// SECTION 5 — Source PDPConnectFR (facturation électronique)
+// SECTION 5 — Stockage des documents
+// =====================================================================
+// Save document storage settings
+if ($action == 'update_doc_storage') {
+    $error_ds = 0;
+    if (GETPOST('token', 'alpha') !== $_SESSION['token']) {
+        $error_ds++;
+    }
+    if (!$error_ds) {
+        $val = GETPOST('GEMINVOICE_DOC_STORAGE', 'alpha');
+        if (!in_array($val, array('local_copy', 'drive_only', 'both'))) {
+            $val = 'local_copy';
+        }
+        dolibarr_set_const($db, 'GEMINVOICE_DOC_STORAGE', $val, 'chaine', 0, '', $conf->entity);
+        setEventMessages($langs->trans("SetupSaved"), null, 'mesgs');
+    }
+}
+
+print '<br>';
+print load_fiche_titre($langs->trans("GeminvoiceDocStorage"), '', 'title_setup');
+
+$doc_storage = getDolGlobalString('GEMINVOICE_DOC_STORAGE', 'local_copy');
+
+print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="update_doc_storage">';
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre"><td colspan="2">' . $langs->trans("GeminvoiceDocStorageDesc") . '</td></tr>';
+
+print '<tr class="oddeven">';
+print '<td>' . $langs->trans("GeminvoiceDocStorage") . '<br>';
+print '<span class="opacitymedium">' . $langs->trans("GeminvoiceDocStorageHint") . '</span></td>';
+print '<td>';
+print '<select name="GEMINVOICE_DOC_STORAGE" class="flat minwidth300">';
+print '<option value="local_copy"' . ($doc_storage == 'local_copy' ? ' selected' : '') . '>' . $langs->trans("GeminvoiceDocStorageLocalCopy") . '</option>';
+print '<option value="drive_only"' . ($doc_storage == 'drive_only' ? ' selected' : '') . '>' . $langs->trans("GeminvoiceDocStorageDriveOnly") . '</option>';
+print '<option value="both"' . ($doc_storage == 'both' ? ' selected' : '') . '>' . $langs->trans("GeminvoiceDocStorageBoth") . '</option>';
+print '</select>';
+print '</td>';
+print '</tr>';
+
+print '</table>';
+print '<div class="center" style="margin-top:10px;">';
+print '<input type="submit" class="button button-save" value="' . $langs->trans("Save") . '">';
+print '</div>';
+print '</form>';
+
+// =====================================================================
+// SECTION 6 — Source PDPConnectFR (facturation électronique)
 // =====================================================================
 print '<br>';
 print load_fiche_titre($langs->trans("GeminvoiceSourcePdp"), '', 'title_setup');
@@ -411,7 +461,7 @@ if (!isModEnabled('pdpconnectfr')) {
 
     $pdp_enabled = !empty($conf->global->GEMINVOICE_PDP_SOURCE_ENABLED);
 
-    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
+    print '<form method="POST" action="' . dol_escape_htmltag($_SERVER["PHP_SELF"]) . '">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="update_pdp">';
 

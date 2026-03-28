@@ -272,9 +272,15 @@ class FacturxSource implements GeminvoiceSourceInterface
     private function parseXml(string $xml_content)
     {
         // Suppress libxml errors — we check the result ourselves
+        // XXE protection: disable external entity loading (SSRF/file-read vector)
+        if (PHP_VERSION_ID < 80000) {
+            // phpcs:ignore -- libxml_disable_entity_loader deprecated in PHP 8 (XXE off by default)
+            libxml_disable_entity_loader(true);
+        }
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
-        if (!$dom->loadXML($xml_content)) {
+        // LIBXML_NONET blocks network access; LIBXML_NOENT prevents entity substitution
+        if (!$dom->loadXML($xml_content, LIBXML_NONET | LIBXML_NOENT)) {
             libxml_clear_errors();
             return false;
         }

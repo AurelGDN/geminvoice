@@ -19,6 +19,9 @@ class GeminvoiceVendorMatcher
     /** @var DoliDB */
     private $db;
 
+    /** @var array|null  Cached supplier list — populated on first call, reused across multiple findMatch() calls */
+    private $suppliers_cache = null;
+
     /** Minimum score (0-100) to accept a fuzzy match */
     const MATCH_THRESHOLD = 75;
 
@@ -104,6 +107,10 @@ class GeminvoiceVendorMatcher
      */
     private function loadSuppliers(): array
     {
+        if ($this->suppliers_cache !== null) {
+            return $this->suppliers_cache;
+        }
+
         $sql  = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe";
         $sql .= " WHERE fournisseur = 1 AND entity IN (" . getEntity('societe') . ")";
         $sql .= " AND status = 1";
@@ -112,6 +119,7 @@ class GeminvoiceVendorMatcher
         $resql = $this->db->query($sql);
         if (!$resql) {
             dol_syslog('Geminvoice VendorMatcher: loadSuppliers() failed — ' . $this->db->lasterror(), LOG_ERR);
+            $this->suppliers_cache = array();
             return array();
         }
 
@@ -119,6 +127,7 @@ class GeminvoiceVendorMatcher
         while ($obj = $this->db->fetch_object($resql)) {
             $result[] = array('rowid' => (int) $obj->rowid, 'name' => $obj->nom);
         }
+        $this->suppliers_cache = $result;
         return $result;
     }
 

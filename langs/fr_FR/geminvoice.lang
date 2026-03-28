@@ -75,6 +75,12 @@ GeminvoiceInstallNoOutput = La tentative d'installation n'a retourné aucun mess
 GeminvoiceGoogleLibsDetected = Bibliothèques Google détectées.
 GeminvoiceGoogleLibsMissing = Bibliothèques Google ABSENTES !
 GeminvoiceGoogleLibsMissingHint = Par défaut, vous devez exécuter une installation via Composer.
+GeminvoiceErrorGDriveJsonInvalid = Le format du JSON du Compte de Service est invalide. Erreur : %s. Re-collez le JSON depuis le fichier .json directement dans la configuration.
+GeminvoiceErrorGDriveJsonMissing = Aucune configuration de Compte de Service (JSON) fournie.
+GeminvoiceErrorGDriveLibMissing = La librairie google/apiclient n'est pas installée.
+GeminvoiceErrorGDriveListFiles = Erreur lors de la récupération des fichiers Drive : %s
+GeminvoiceErrorGDriveDownload = Erreur lors du téléchargement depuis Drive : %s
+GeminvoiceErrorGDriveMarkProcessed = Erreur lors du déplacement du fichier dans Drive : %s
 GeminvoiceEnabled = Activé
 GeminvoiceDisabledPHPRestriction = Désactivé (Restriction PHP)
 GeminvoiceSystemCommandsStatus = Status des commandes système (shell_exec) :
@@ -366,3 +372,14 @@ GeminvoiceDocReviewPdpNoPreview = Pas d'aperçu PDF — un lien direct vers la f
 GeminvoiceDocReviewPdpButton = Le bouton de validation s'intitule "Appliquer les codes comptables" au lieu de "Valider et créer la facture".
 GeminvoiceDocValidationStep3Pdp = Pour les factures PDP : cliquez sur "Appliquer les codes comptables" — les codes sont affectés aux lignes de la facture brouillon existante dans Dolibarr.
 GeminvoiceDocBadgeDescV2 = Badge coloré indiquant l'origine de la facture : Google Drive (bleu), Upload manuel (vert), Factur-X (violet), PDP (rouge).
+
+# Alpha 19 — Stockage documents & aperçu
+GeminvoiceDocStorage = Stockage des documents
+GeminvoiceDocStorageDesc = Stratégie de stockage des pièces jointes factures
+GeminvoiceDocStorageHint = Choisissez où conserver les documents sources après traitement : sur le serveur Dolibarr (pièce jointe native), sur Google Drive (aperçu via lien), ou les deux.
+GeminvoiceDocStorageLocalCopy = Importer sur le serveur Dolibarr (pièce jointe native)
+GeminvoiceDocStorageDriveOnly = Conserver sur Google Drive uniquement
+GeminvoiceDocStorageBoth = Les deux (Drive + copie locale)
+GeminvoiceOpenInDrive = Ouvrir dans Google Drive
+GeminvoiceViewInvoiceDocuments = Voir les documents joints de la facture
+GeminvoiceNoPreviewAvailable = Aucun aperçu disponible pour ce document.

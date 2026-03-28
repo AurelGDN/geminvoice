@@ -10,7 +10,11 @@ $sapi_type = php_sapi_name();
 $script_file = basename(__FILE__);
 $path = __DIR__;
 
-// Test if batch mode
+// Block web-context access — this script must only run from the command line.
+if (!in_array($sapi_type, array('cli', 'cgi', 'cgi-fcgi'), true)) {
+    header('HTTP/1.1 403 Forbidden');
+    die("Error: This script must be run from the command line.\n");
+}
 if (substr($sapi_type, 0, 3) == 'cgi') {
     echo "Error: You are using PHP for CGI. To execute ".$script_file." from command line, you must use PHP for CLI mode.\n";
     exit(-1);
@@ -60,7 +64,7 @@ if (!dol_is_dir($temp_dir)) dol_mkdir($temp_dir);
 foreach ($files as $file) {
     print "Processing file: " . $file['name'] . "\n";
     
-    $local_path = $temp_dir . '/' . $file['name'];
+    $local_path = $temp_dir . '/' . dol_sanitizeFileName($file['name']);
     
     // Download File
     if ($gdrive->downloadInvoice($file['id'], $local_path)) {

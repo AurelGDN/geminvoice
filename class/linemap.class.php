@@ -93,6 +93,7 @@ class GeminvoiceLineMap
             $sql .= ", is_parafiscal = "     . ((int) $is_parafiscal);
             $sql .= ", label = '"            . $this->db->escape($label)             . "'";
             $sql .= " WHERE rowid = "        . (int) $rowid;
+            $sql .= " AND entity IN ("       . getEntity('geminvoice')               . ")";
         } else {
             $sql = "INSERT INTO " . MAIN_DB_PREFIX . "geminvoice_line_mapping";
             $sql .= " (entity, keyword, accounting_code, vat_rate, fk_product, is_parafiscal, label, fk_user_creat, datec)";

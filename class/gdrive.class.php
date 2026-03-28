@@ -19,7 +19,7 @@ class GDriveSync
      */
     public function __construct($db)
     {
-        global $conf;
+        global $conf, $langs;
         $this->db = $db;
         $this->error = '';
         $this->client = null;
@@ -66,13 +66,13 @@ class GDriveSync
                     $this->client->setAuthConfig($authConfig);
                     $this->service = new \Google\Service\Drive($this->client);
                 } else {
-                    $this->error = "Le format du JSON du Compte de Service est invalide. Erreur: " . json_last_error_msg() . ". Re-collez le JSON depuis le fichier .json directement dans la configuration.";
+                    $this->error = $langs->trans('GeminvoiceErrorGDriveJsonInvalid', json_last_error_msg());
                 }
             } else {
-                $this->error = "Aucune configuration de Compte de Service (JSON) fournie.";
+                $this->error = $langs->trans('GeminvoiceErrorGDriveJsonMissing');
             }
         } else {
-            $this->error = "La librairie google/apiclient n'est pas installée.";
+            $this->error = $langs->trans('GeminvoiceErrorGDriveLibMissing');
         }
 
         if (!empty($this->error)) {
@@ -132,7 +132,7 @@ class GDriveSync
 
             return $files_found;
         } catch (Exception $e) {
-            $this->error = "Erreur listFiles: " . $e->getMessage();
+            $this->error = $langs->trans('GeminvoiceErrorGDriveListFiles', $e->getMessage());
             dol_syslog("Geminvoice: " . $this->error, LOG_ERR);
             return false;
         }
@@ -159,58 +159,111 @@ class GDriveSync
             }
             return false;
         } catch (Exception $e) {
-            $this->error = "Erreur downloadInvoice: " . $e->getMessage();
+            $this->error = $langs->trans('GeminvoiceErrorGDriveDownload', $e->getMessage());
             dol_syslog("Geminvoice: " . $this->error, LOG_ERR);
             return false;
         }
     }
 
     /**
-     * Move the processed file to a "Processed" subfolder
-     * 
-     * @param string $file_id The Google Drive File ID
-     * @return bool True on success
+     * Move the processed file to a "processed/YYYY/" subfolder organized by invoice year.
+     *
+     * @param  string      $file_id       The Google Drive File ID
+     * @param  string|null $invoice_date  Invoice date (YYYY-MM-DD string or null for current year)
+     * @return bool        True on success
      */
-    public function markAsProcessed($file_id)
+    public function markAsProcessed($file_id, $invoice_date = null)
     {
         if (!$this->service) return false;
 
         try {
-            // Find the Processed folder ID
-            $query = sprintf("name = 'processed' and '%s' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false", $this->folder_id);
-            $optParams = array('q' => $query, 'fields' => 'files(id, name)');
-            $results = $this->service->files->listFiles($optParams);
-            $processed_folder_id = null;
-
-            if (count($results->getFiles()) > 0) {
-                $processed_folder_id = $results->getFiles()[0]->getId();
+            // Determine target year
+            if (!empty($invoice_date)) {
+                $ts = is_numeric($invoice_date) ? (int) $invoice_date : strtotime($invoice_date);
+                $year = ($ts > 0) ? date('Y', $ts) : date('Y');
             } else {
-                // Create it if not exists
-                $fileMetadata = new \Google\Service\Drive\DriveFile(array(
-                    'name' => 'processed',
-                    'parents' => array($this->folder_id),
-                    'mimeType' => 'application/vnd.google-apps.folder'
-                ));
-                $folder = $this->service->files->create($fileMetadata, array('fields' => 'id'));
-                $processed_folder_id = $folder->id;
+                $year = date('Y');
             }
 
-            // Move the file
+            // Find or create processed/ then processed/YYYY/
+            $processed_folder_id = $this->findOrCreateSubfolder('processed', $this->folder_id);
+            $year_folder_id      = $this->findOrCreateSubfolder($year, $processed_folder_id);
+
+            // Move the file into the year subfolder
             $emptyFile = new \Google\Service\Drive\DriveFile();
-            // Retrieve the existing parents to remove
             $file = $this->service->files->get($file_id, array('fields' => 'parents'));
             $previousParents = implode(',', $file->parents);
-            
+
             $this->service->files->update($file_id, $emptyFile, array(
-                'addParents' => $processed_folder_id,
+                'addParents' => $year_folder_id,
                 'removeParents' => $previousParents,
                 'fields' => 'id, parents'
             ));
 
+            // Make file viewable by link if storage mode requires Drive access
+            global $conf;
+            $storage_mode = getDolGlobalString('GEMINVOICE_DOC_STORAGE', 'local_copy');
+            if (in_array($storage_mode, array('drive_only', 'both'))) {
+                $this->makeFileViewableByLink($file_id);
+            }
+
             return true;
         } catch (Exception $e) {
-            $this->error = "Erreur markAsProcessed: " . $e->getMessage();
+            $this->error = $langs->trans('GeminvoiceErrorGDriveMarkProcessed', $e->getMessage());
             dol_syslog("Geminvoice: " . $this->error, LOG_ERR);
+            return false;
+        }
+    }
+
+    /**
+     * Find or create a subfolder by name under a given parent folder.
+     *
+     * @param  string $name       Subfolder name
+     * @param  string $parent_id  Parent folder ID in Google Drive
+     * @return string             The subfolder's Drive ID
+     */
+    private function findOrCreateSubfolder($name, $parent_id)
+    {
+        $query = sprintf(
+            "name = '%s' and '%s' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            addcslashes($name, "'"),
+            $parent_id
+        );
+        $optParams = array('q' => $query, 'fields' => 'files(id, name)');
+        $results = $this->service->files->listFiles($optParams);
+
+        if (count($results->getFiles()) > 0) {
+            return $results->getFiles()[0]->getId();
+        }
+
+        // Create the subfolder
+        $fileMetadata = new \Google\Service\Drive\DriveFile(array(
+            'name' => $name,
+            'parents' => array($parent_id),
+            'mimeType' => 'application/vnd.google-apps.folder'
+        ));
+        $folder = $this->service->files->create($fileMetadata, array('fields' => 'id'));
+        return $folder->id;
+    }
+
+    /**
+     * Make a file viewable by anyone with the link (reader permission).
+     * Required for Drive-based document preview in review.php.
+     *
+     * @param  string $file_id  Google Drive file ID
+     * @return bool   True on success
+     */
+    public function makeFileViewableByLink($file_id)
+    {
+        try {
+            $permission = new \Google\Service\Drive\Permission(array(
+                'type' => 'anyone',
+                'role' => 'reader',
+            ));
+            $this->service->permissions->create($file_id, $permission);
+            return true;
+        } catch (Exception $e) {
+            dol_syslog("Geminvoice: makeFileViewableByLink failed for " . $file_id . ": " . $e->getMessage(), LOG_WARNING);
             return false;
         }
     }
