@@ -7,7 +7,7 @@
 ## Version Française
 
 ### Présentation
-**Geminvoice** est un module pour [Dolibarr ERP & CRM](https://www.dolibarr.org) permettant d'automatiser la saisie des factures fournisseurs grâce à l'intelligence artificielle **Google Gemini**. Il récupère automatiquement vos documents depuis un dossier **Google Drive**, extrait les données critiques (fournisseur, montants, TVA, lignes) et prépare les factures dans Dolibarr.
+**Geminvoice** est un module pour [Dolibarr ERP & CRM](https://www.dolibarr.org) permettant d'automatiser la saisie des factures fournisseurs et l'affectation des codes comptables (staging) grâce à l'intelligence artificielle **Google Gemini**. Il récupère automatiquement vos documents depuis un dossier **Google Drive**, extrait les données critiques (fournisseur, montants, TVA, lignes) et prépare les factures dans Dolibarr.
 
 ### Fonctionnalités Clés
 - **Synchronisation Google Drive** : Récupération automatique des PDF et images depuis un dossier partagé.
@@ -38,7 +38,7 @@
 ## English Version
 
 ### Overview
-**Geminvoice** is a module for [Dolibarr ERP & CRM](https://www.dolibarr.org) designed to automate supplier invoice entry using **Google Gemini** artificial intelligence. It automatically fetches your documents from a **Google Drive** folder, extracts critical data (vendor, amounts, VAT, lines), and prepares the invoices within Dolibarr.
+**Geminvoice** is a module for [Dolibarr ERP & CRM](https://www.dolibarr.org) designed to automate supplier invoice entry and accounting code assignment (staging) using **Google Gemini** artificial intelligence. It automatically fetches your documents from a **Google Drive** folder, extracts critical data (vendor, amounts, VAT, lines), and prepares the invoices within Dolibarr.
 
 ### Key Features
 - **Google Drive Sync**: Automatic retrieval of PDFs and images from a shared folder.

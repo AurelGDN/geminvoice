@@ -1,6 +1,6 @@
 # English translation for Geminvoice
 ModuleGeminvoiceName = Geminvoice
-ModuleGeminvoiceDesc = Automated OCR for Supplier Invoices using Google Drive and Gemini AI
+ModuleGeminvoiceDesc = Automated OCR & AI for Supplier Invoices, Entry & Accounting Code Assignment (Staging) via Google Drive and Gemini AI
 GeminvoiceSetup = Geminvoice Setup
 GeminvoiceSettings = Geminvoice Settings
 GEMINVOICE_GDRIVE_FOLDER_ID = Google Drive Folder ID
@@ -249,7 +249,7 @@ GeminvoiceDocTabErrors = Troubleshooting
 
 GeminvoiceDocIntroSummary = Welcome to the Geminvoice Help Center.
 GeminvoiceDocWhatIsIt = What is Geminvoice?
-GeminvoiceDocIntroDesc = Geminvoice is an AI-driven OCR automation module for Dolibarr. It allows you to transform your PDF or image invoices into native Dolibarr documents without manual entry.
+GeminvoiceDocIntroDesc = Geminvoice is an AI-driven accounting intelligence module for Dolibarr. It automates supplier invoice entry and accounting code assignment (staging) from multiple sources: PDFs via Google Drive, manual uploads, Factur-X, or PDPConnectFR electronic invoices.
 GeminvoiceDocWorkflowTitle = Standard Workflow
 GeminvoiceDocWorkflowStep1 = Import documents (Google Drive, Upload, or Factur-X)
 GeminvoiceDocWorkflowStep2 = Automatic analysis by OCR and Artificial Intelligence (Google Gemini)

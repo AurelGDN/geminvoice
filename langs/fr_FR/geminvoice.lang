@@ -1,6 +1,6 @@
 # Traduction française pour Geminvoice
 ModuleGeminvoiceName = Geminvoice
-ModuleGeminvoiceDesc = OCR Automatisé pour Factures Fournisseurs via Google Drive et Gemini AI
+ModuleGeminvoiceDesc = OCR Automatisé pour Factures Fournisseurs via Google Drive et Gemini AI (Saisie & Affectation comptable / Staging)
 GeminvoiceSetup = Configuration Geminvoice
 GeminvoiceSettings = Paramètres Geminvoice
 GEMINVOICE_GDRIVE_FOLDER_ID = ID du dossier Google Drive

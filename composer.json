@@ -1,6 +1,6 @@
 {
     "name": "geminvoice/geminvoice",
-    "description": "OCR Invoice scanner for Dolibarr with Gemini AI",
+    "description": "Dolibarr OCR & AI: Automated Supplier Invoices and Accounting Code Assignment (Staging) using Gemini AI",
     "type": "dolibarr-module",
     "require": {
         "google/apiclient": "^2.15"
