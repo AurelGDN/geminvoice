@@ -122,11 +122,31 @@ class GdriveSource implements GeminvoiceSourceInterface
         dol_syslog('Geminvoice GdriveSource: ' . count($files) . ' fichier(s) trouvé(s).', LOG_INFO);
 
         foreach ($files as $file) {
+            // Skip files already present in staging (prevents re-staging on retry)
+            $existing_id = $staging->existsInStaging($file['id']);
+            if ($existing_id !== false) {
+                dol_syslog('Geminvoice GdriveSource: skipped ' . $file['name'] . ' — already in staging (ID=' . $existing_id . ')', LOG_DEBUG);
+                continue;
+            }
+
             $local_path = $temp_dir . '/' . dol_sanitizeFileName($file['name']);
             $error_msg  = '';
 
             if ($gdrive->downloadInvoice($file['id'], $local_path)) {
-                $extraction = $gemini->analyzeInvoice($local_path, $file['mimeType']);
+                // Remap generic Drive MIME types to the actual content type detected from the file.
+                // 'application/download' and 'application/octet-stream' are returned by Drive when
+                // the server-side type is ambiguous (e.g. .PDF with uppercase extension).
+                $mime = $file['mimeType'];
+                if (in_array($mime, array('application/download', 'application/octet-stream'), true)) {
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $detected = $finfo ? finfo_file($finfo, $local_path) : false;
+                    if ($finfo) finfo_close($finfo);
+                    if ($detected) {
+                        dol_syslog('Geminvoice GdriveSource: MIME remapped ' . $mime . ' → ' . $detected . ' for ' . $file['name'], LOG_DEBUG);
+                        $mime = $detected;
+                    }
+                }
+                $extraction = $gemini->analyzeInvoice($local_path, $mime);
 
                 if ($extraction && !empty($extraction['vendor_name'])) {
                     $staging_id = $staging->create($file['id'], $file['name'], $local_path, $extraction, GeminvoiceStaging::STATUS_PENDING, '', 'gdrive');

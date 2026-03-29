@@ -208,11 +208,15 @@ class modGeminvoice extends DolibarrModules
         $sql[] = file_get_contents(dirname(__FILE__) . '/../../sql/llx_geminvoice_staging.sql');
         $sql[] = file_get_contents(dirname(__FILE__) . '/../../sql/llx_geminvoice_supplier_mapping.sql');
         $sql[] = file_get_contents(dirname(__FILE__) . '/../../sql/llx_geminvoice_line_mapping.sql');
-        // Alpha12 migration
-        $sql[] = "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_line_mapping ADD COLUMN fk_product INT DEFAULT NULL AFTER vat_rate";
-        $sql[] = "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_line_mapping ADD KEY idx_fk_product (fk_product)";
+        // Alpha12 migration (ignoreerror: column/key may already exist on upgrades)
+        $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_line_mapping ADD COLUMN fk_product INT DEFAULT NULL AFTER vat_rate", 'ignoreerror' => 1);
+        $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_line_mapping ADD KEY idx_fk_product (fk_product)", 'ignoreerror' => 1);
+        // Alpha15 migration — error tracking
+        $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_staging ADD COLUMN error_message TEXT DEFAULT NULL AFTER status", 'ignoreerror' => 1);
         // Alpha16 migration — multi-source support
-        $sql[] = "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_staging ADD COLUMN source VARCHAR(32) NOT NULL DEFAULT 'gdrive' AFTER entity";
+        $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_staging ADD COLUMN source VARCHAR(32) NOT NULL DEFAULT 'gdrive' AFTER entity", 'ignoreerror' => 1);
+        // Alpha18 migration — duplicate warning at staging time
+        $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_staging ADD COLUMN duplicate_warning VARCHAR(255) DEFAULT NULL AFTER error_message", 'ignoreerror' => 1);
         $result = $this->_init($sql, $options);
         return $result;
     }

@@ -418,7 +418,8 @@ print '<th class="right" style="width:70px;">' . $langs->trans("VATRate") . ' %<
 print '<th class="right" style="width:80px;">' . $langs->trans("TotalHT") . '</th>';
 print '<th class="right" style="width:80px;">' . $langs->trans("TotalTTC") . '</th>';
 print '<th style="width:220px;">' . $langs->trans("AccountingCode") . '</th>';
-print '<th style="width:180px;">' . $langs->trans("Product") . ' <span style="font-weight:normal;font-size:0.75em;opacity:0.7;">(' . $langs->trans("GeminvoiceProductAutoFill") . ')</span></th>';
+print '<th style="width:180px;">' . $langs->trans("Product") . ' <span style="font-weight:normal;font-size:0.75em;opacity:0.7;">(' . $langs->trans("GeminvoiceProductAutoFill") . ')</span>'
+    . ' <a href="#" onclick="clearAllProducts(); return false;" title="' . dol_escape_htmltag($langs->trans("GeminvoiceClearAllProducts")) . '" style="font-size:0.8em;text-decoration:none;margin-left:4px;">🚫</a></th>';
 print '<th class="center" style="width:80px;">' . $langs->trans("GeminvoiceParafiscal") . '<br><input type="checkbox" id="toggle_parafiscal_all" title="' . $langs->trans("GeminvoiceToggleAll") . '" onchange="toggleAllParafiscal(this.checked)"></th>';
 print '<th class="center" style="width:70px;">' . $langs->trans("GeminvoiceMemorize") . '<br><input type="checkbox" id="toggle_memorize_all" title="' . $langs->trans("GeminvoiceToggleAll") . '" onchange="toggleAllMemorize(this.checked)"></th>';
 print '<th class="center" style="width:40px;">⊗</th>';
@@ -452,7 +453,9 @@ foreach ($lines as $i => $line) {
         if ($best_tm && $best_tm->score >= $tm_threshold) {
             // P2: textmatch score above threshold — confident match, use directly
             $text_product_match = $best_tm;
-            if (!empty($best_tm->accounting_code)) {
+            // Only auto-fill accounting code from product if score >= 90% (high confidence)
+            // Below 90%, keep OCR-detected accounting code and description as primary
+            if (!empty($best_tm->accounting_code) && $best_tm->score >= 90) {
                 $acc_code     = $best_tm->accounting_code;
                 $source_badge = '<span title="' . dol_escape_htmltag($langs->trans("GeminvoiceTextMatchAccountTooltip", $best_tm->score . '%')) . '" style="cursor:help;">🔍</span>';
             }
@@ -528,7 +531,7 @@ foreach ($lines as $i => $line) {
                         break;
                     }
                 }
-                if ($text_product_match && !empty($text_product_match->accounting_code)) {
+                if ($text_product_match && !empty($text_product_match->accounting_code) && $text_product_match->score >= 90) {
                     $acc_code     = $text_product_match->accounting_code;
                     $source_badge = '<span title="' . dol_escape_htmltag($langs->trans("GeminvoiceAISuggestionTooltip")) . '" style="cursor:help;">🤖</span>';
                 }
@@ -576,7 +579,12 @@ foreach ($lines as $i => $line) {
         $fk_product_line = (int) $line['fk_product'];
         $product_badge = '<span style="background:#95a5a6;color:#fff;padding:1px 5px;border-radius:3px;font-size:0.75em;cursor:help;" title="' . $langs->trans("GeminvoiceProductBadgeManual") . '">✏️</span> ';
     } elseif (!empty($text_product_match)) {
-        $fk_product_line = (int) $text_product_match->rowid;
+        // Only pre-select product if confidence >= 90%. Below that, show badge but leave dropdown empty
+        // so OCR description and accounting code remain the primary data.
+        $match_score = isset($text_product_match->score) ? (int) $text_product_match->score : 0;
+        if ($match_score >= 90) {
+            $fk_product_line = (int) $text_product_match->rowid;
+        }
         if (!empty($text_product_match->from_ai)) {
             $cache_indicator = !empty($text_product_match->from_cache) ? ' 💾' : '';
             $ai_title = dol_escape_htmltag($langs->trans("GeminvoiceProductBadgeAI", $text_product_match->score) . ($text_product_match->reason ? ' — ' . $text_product_match->reason : ''));
@@ -606,7 +614,8 @@ foreach ($lines as $i => $line) {
     print '<td class="right"><span class="line_total_ht" style="font-weight:bold; opacity:0.8;">0.00</span></td>';
     print '<td class="right"><span class="line_total_ttc" style="font-weight:bold; opacity:0.8;">0.00</span></td>';
     print '<td class="nowrap">' . $source_badge . ' ' . buildAccountSelect('line_acc[]', $acc_code, $all_accounts) . '</td>';
-    print '<td style="min-width:160px;">' . $product_badge . $prod_select_html . '</td>';
+    print '<td style="min-width:160px;">' . $product_badge . $prod_select_html
+        . ' <a href="#" onclick="clearLineProduct(this); return false;" title="' . dol_escape_htmltag($langs->trans("GeminvoiceClearProduct")) . '" style="font-size:0.8em;text-decoration:none;opacity:0.6;">✖</a></td>';
     print '<td class="center"><input type="checkbox" name="line_parafiscal[]" value="' . $i . '"' . ($is_para ? ' checked' : '') . '></td>';
     print '<td class="center"><input type="checkbox" name="line_memorize[]" value="' . $i . '" title="' . $langs->trans("GeminvoiceMemorizeLineRule") . '"></td>';
     print '<td class="center nowrap">';
@@ -1008,6 +1017,32 @@ function recomputeTotals() {
     
     // Run smart discount visual checks
     checkDiscounts();
+}
+
+// Clear product selection on a single line
+function clearLineProduct(btn) {
+    var row = btn.closest("tr");
+    if (!row) return;
+    var sel = row.querySelector("select[name=\'line_fk_product[]\']");
+    if (sel) {
+        if (typeof jQuery !== "undefined" && jQuery(sel).data("select2")) {
+            jQuery(sel).val("").trigger("change");
+        } else {
+            sel.value = "";
+        }
+    }
+}
+
+// Clear all product selections
+function clearAllProducts() {
+    var selects = document.querySelectorAll("select[name=\'line_fk_product[]\']");
+    selects.forEach(function(sel) {
+        if (typeof jQuery !== "undefined" && jQuery(sel).data("select2")) {
+            jQuery(sel).val("").trigger("change");
+        } else {
+            sel.value = "";
+        }
+    });
 }
 
 // Initial calculation

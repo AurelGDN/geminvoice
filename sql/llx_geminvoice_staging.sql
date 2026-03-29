@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS llx_geminvoice_staging (
     json_data          TEXT         DEFAULT NULL,
     status             SMALLINT     NOT NULL DEFAULT 0,
     error_message      TEXT         DEFAULT NULL,              -- migration 002
+    duplicate_warning  VARCHAR(255) DEFAULT NULL,              -- migration 003
     fk_facture_fourn   INT          DEFAULT NULL,
     fk_user_valid      INT          DEFAULT NULL,
     note               TEXT         DEFAULT NULL,

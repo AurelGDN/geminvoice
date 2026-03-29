@@ -45,6 +45,7 @@ class GeminvoiceStaging
     public $fk_user_valid;
     public $note;
     public $error_message;
+    public $duplicate_warning;
     public $source = 'gdrive';  // Source identifier: 'gdrive', 'upload', 'facturx', etc.
     public $datec;
     public $tms;
@@ -94,9 +95,19 @@ class GeminvoiceStaging
         $json_raw       = !empty($json_data) ? "'" . $this->db->escape(json_encode($json_data)) . "'" : "NULL";
         $source_clean   = $this->db->escape(empty($source) ? 'gdrive' : $source);
 
+        // Pre-staging duplicate detection: check if this invoice already exists in Dolibarr
+        $dup_warning = null;
+        if (!empty($json_data['vendor_name']) && !empty($json_data['invoice_number'])) {
+            $dup = $this->findDuplicate($json_data['vendor_name'], $json_data['invoice_number']);
+            if ($dup) {
+                $dup_warning = $dup->ref;
+                dol_syslog("Geminvoice: Duplicate warning at staging: " . $json_data['vendor_name'] . " / " . $json_data['invoice_number'] . " matches Dolibarr invoice " . $dup->ref, LOG_WARNING);
+            }
+        }
+
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . "geminvoice_staging";
         $sql .= " (entity, source, gdrive_file_id, filename, local_filepath, vendor_name, invoice_number,";
-        $sql .= "  invoice_date, total_ht, total_ttc, json_data, status, error_message, datec)";
+        $sql .= "  invoice_date, total_ht, total_ttc, json_data, status, error_message, duplicate_warning, datec)";
         $sql .= " VALUES (";
         $sql .= " " . ((int) $conf->entity);
         $sql .= ", '" . $source_clean . "'";
@@ -111,6 +122,7 @@ class GeminvoiceStaging
         $sql .= ", " . $json_raw;
         $sql .= ", " . (int) $status;
         $sql .= ", " . ($error_message ? "'" . $this->db->escape($error_message) . "'" : "NULL");
+        $sql .= ", " . ($dup_warning ? "'" . $this->db->escape($dup_warning) . "'" : "NULL");
         $sql .= ", '" . $this->db->idate($now) . "'";
         $sql .= ")";
 
@@ -160,6 +172,7 @@ class GeminvoiceStaging
                 $this->fk_user_valid    = $obj->fk_user_valid;
                 $this->note             = $obj->note;
                 $this->error_message    = $obj->error_message;
+                $this->duplicate_warning = isset($obj->duplicate_warning) ? $obj->duplicate_warning : null;
                 $this->datec            = $this->db->jdate($obj->datec);
                 return 1;
             }
@@ -237,6 +250,7 @@ class GeminvoiceStaging
             $staging->fk_user_valid    = $obj->fk_user_valid;
             $staging->note             = $obj->note;
             $staging->error_message    = $obj->error_message;
+            $staging->duplicate_warning = isset($obj->duplicate_warning) ? $obj->duplicate_warning : null;
             $staging->datec            = $this->db->jdate($obj->datec);
             $result[] = $staging;
         }
@@ -294,7 +308,7 @@ class GeminvoiceStaging
         $rowid = (int) $rowid;
         $sets  = array();
 
-        $allowed = array('vendor_name', 'invoice_number', 'invoice_date', 'total_ht', 'total_ttc', 'json_data', 'status', 'source', 'note', 'error_message', 'fk_facture_fourn', 'fk_user_valid');
+        $allowed = array('vendor_name', 'invoice_number', 'invoice_date', 'total_ht', 'total_ttc', 'json_data', 'status', 'source', 'note', 'error_message', 'duplicate_warning', 'fk_facture_fourn', 'fk_user_valid');
 
         foreach ($allowed as $field) {
             if (!array_key_exists($field, $data)) {
@@ -465,6 +479,35 @@ class GeminvoiceStaging
         }
 
         return null;
+    }
+
+    /**
+     * Check if a staging record with the given file identifier already exists
+     * (any status except rejected). Prevents re-staging the same file on retry.
+     *
+     * @param  string $gdrive_file_id  The file identifier to check
+     * @return int|false               Existing rowid if found, false otherwise
+     */
+    public function existsInStaging($gdrive_file_id)
+    {
+        if (empty($gdrive_file_id)) {
+            return false;
+        }
+
+        $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "geminvoice_staging";
+        $sql .= " WHERE gdrive_file_id = '" . $this->db->escape($gdrive_file_id) . "'";
+        $sql .= " AND entity IN (" . getEntity('geminvoice') . ")";
+        $sql .= " AND status != " . self::STATUS_REJECTED;
+        $sql .= " LIMIT 1";
+
+        $resql = $this->db->query($sql);
+        if ($resql) {
+            $obj = $this->db->fetch_object($resql);
+            if ($obj) {
+                return (int) $obj->rowid;
+            }
+        }
+        return false;
     }
 
     /**

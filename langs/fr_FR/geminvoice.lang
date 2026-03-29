@@ -81,6 +81,10 @@ GeminvoiceErrorGDriveLibMissing = La librairie google/apiclient n'est pas instal
 GeminvoiceErrorGDriveListFiles = Erreur lors de la récupération des fichiers Drive : %s
 GeminvoiceErrorGDriveDownload = Erreur lors du téléchargement depuis Drive : %s
 GeminvoiceErrorGDriveMarkProcessed = Erreur lors du déplacement du fichier dans Drive : %s
+GeminvoiceSkippedAlreadyInStaging = Fichier ignoré — déjà en staging (ID=%s)
+GeminvoiceDuplicateWarningAtStaging = Doublon potentiel détecté au staging : facture %s
+GeminvoiceClearProduct = Retirer la détection produit sur cette ligne
+GeminvoiceClearAllProducts = Retirer toutes les détections produit
 GeminvoiceEnabled = Activé
 GeminvoiceDisabledPHPRestriction = Désactivé (Restriction PHP)
 GeminvoiceSystemCommandsStatus = Status des commandes système (shell_exec) :

@@ -234,6 +234,7 @@ llxHeader('', $langs->trans("GeminvoiceDashboard"));
 
 dol_include_once('/geminvoice/class/staging.class.php');
 $staging = new GeminvoiceStaging($db);
+$linkback = '';
 
 print load_fiche_titre($langs->trans("GeminvoiceDashboard"), $linkback, 'bill');
 

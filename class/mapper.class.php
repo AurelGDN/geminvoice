@@ -73,6 +73,8 @@ class GeminvoiceMapper
                 $soc->name       = $vendor_name;
                 $soc->fournisseur = 1;
                 $soc->client     = 0;
+                $soc->code_fournisseur = -1; // Auto-generate via Dolibarr numbering module
+                $soc->code_client      = -1;
                 // Enrich from OCR data if available
                 if (!empty($data['vendor_siret']))     $soc->idprof2    = $data['vendor_siret'];
                 if (!empty($data['vendor_vat']))       $soc->tva_intra  = $data['vendor_vat'];
