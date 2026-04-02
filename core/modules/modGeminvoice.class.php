@@ -40,7 +40,7 @@ class modGeminvoice extends DolibarrModules
         $this->description = $langs->trans("ModuleGeminvoiceDesc");
 
         // Version
-        $this->version = '1.1.0-alpha18';
+        $this->version = '1.0.0-beta1';
 
         // Key used in llx_const table to save module status enabled/disabled
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
@@ -66,7 +66,7 @@ class modGeminvoice extends DolibarrModules
         $this->config_page_url = array("setup.php@geminvoice");
 
         // Dependencies
-        $this->depends         = array('modFournisseur', 'modComptabilite');
+        $this->depends         = array('modFournisseur');
         $this->requiredby      = array();
         $this->conflictwith    = array();
         $this->phpmin          = array(7, 4);
@@ -205,9 +205,10 @@ class modGeminvoice extends DolibarrModules
     public function init($options = '')
     {
         $sql = array();
-        $sql[] = file_get_contents(dirname(__FILE__) . '/../../sql/llx_geminvoice_staging.sql');
-        $sql[] = file_get_contents(dirname(__FILE__) . '/../../sql/llx_geminvoice_supplier_mapping.sql');
-        $sql[] = file_get_contents(dirname(__FILE__) . '/../../sql/llx_geminvoice_line_mapping.sql');
+        
+        // Let Dolibarr natively parse and execute the .sql files located in the sql/ directory
+        // Removing file_get_contents() as it causes silent syntax errors with multi-line statements and comments
+        
         // Alpha12 migration (ignoreerror: column/key may already exist on upgrades)
         $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_line_mapping ADD COLUMN fk_product INT DEFAULT NULL AFTER vat_rate", 'ignoreerror' => 1);
         $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_line_mapping ADD KEY idx_fk_product (fk_product)", 'ignoreerror' => 1);
@@ -217,6 +218,7 @@ class modGeminvoice extends DolibarrModules
         $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_staging ADD COLUMN source VARCHAR(32) NOT NULL DEFAULT 'gdrive' AFTER entity", 'ignoreerror' => 1);
         // Alpha18 migration — duplicate warning at staging time
         $sql[] = array('sql' => "ALTER TABLE " . MAIN_DB_PREFIX . "geminvoice_staging ADD COLUMN duplicate_warning VARCHAR(255) DEFAULT NULL AFTER error_message", 'ignoreerror' => 1);
+        
         $result = $this->_init($sql, $options);
         return $result;
     }

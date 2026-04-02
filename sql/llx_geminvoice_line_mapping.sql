@@ -16,7 +16,5 @@ CREATE TABLE IF NOT EXISTS llx_geminvoice_line_mapping (
     fk_user_creat    INT          DEFAULT NULL,
     datec            DATETIME     DEFAULT NULL,
     tms              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (rowid),
-    UNIQUE KEY uk_keyword_entity (keyword, entity),
-    KEY idx_fk_product (fk_product)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    PRIMARY KEY (rowid)
+) ENGINE=innodb;

@@ -2,7 +2,7 @@
 /**
  *  \file       review.php
  *  \ingroup    geminvoice
- *  \brief      Review and validation page for a staged supplier invoice (Alpha18)
+ *  \brief      Review and validation page for a staged supplier invoice (Beta 1)
  *              Per-line accounting code, parafiscal badge, learning memorization
  */
 

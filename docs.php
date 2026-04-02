@@ -283,7 +283,11 @@ if ($tab == 'errors') {
     print '<div class="warning">' . $langs->trans("GeminvoiceDocErrorResolution") . '</div>';
 }
 
-print dol_get_fiche_end();
+    print '<div class="tabsAction">';
+    print '<a class="butAction" href="admin/setup.php">' . $langs->trans("GeminvoiceBackToSetup") . '</a>';
+    print '</div>';
+
+    print dol_get_fiche_end();
 
 llxFooter();
 $db->close();

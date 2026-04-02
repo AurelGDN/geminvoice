@@ -11,11 +11,18 @@
  */
 
 if (!defined('NOSESSION')) define('NOSESSION', '1');
+if (!defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL', '1');
+if (!defined('NOLOGIN')) define('NOLOGIN', '1');
+if (!defined('NOCSRFCHECK')) define('NOCSRFCHECK', '1');
 
 $res = 0;
-if (! $res && file_exists("../../../main.inc.php"))  $res = @include "../../../main.inc.php";
-if (! $res && file_exists("../../../../main.inc.php")) $res = @include "../../../../main.inc.php";
-if (! $res) die("Include of main.inc.php fails. Check script position.\n");
+// Prioritize master.inc.php for CLI context
+if (! $res && file_exists(dirname(__FILE__)."/../../../master.inc.php"))  $res = @include dirname(__FILE__)."/../../../master.inc.php";
+if (! $res && file_exists(dirname(__FILE__)."/../../../../master.inc.php")) $res = @include dirname(__FILE__)."/../../../../master.inc.php";
+if (! $res && file_exists(dirname(__FILE__)."/../../../main.inc.php"))    $res = @include dirname(__FILE__)."/../../../main.inc.php";
+if (! $res && file_exists(dirname(__FILE__)."/../../../../main.inc.php"))  $res = @include dirname(__FILE__)."/../../../../main.inc.php";
+
+if (! $res) die("Include of master.inc.php or main.inc.php fails. Check script position (DIR: ".dirname(__FILE__).").\n");
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 dol_include_once('/geminvoice/class/cron.class.php');

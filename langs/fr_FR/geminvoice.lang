@@ -12,6 +12,7 @@ GEMINVOICE_GDRIVE_AUTH_JSONTooltip = Collez ici le contenu complet du fichier JS
 GeminvoiceSaveSettings = Sauvegarder
 GeminvoiceSyncNow = Synchroniser Maintenant
 GeminvoiceAbout = À propos
+GeminvoiceBackToSetup = Vers la configuration du module
 
 GeminvoiceSetupInstructionsTitle = Prérequis : Configuration sur Google Cloud Platform
 GeminvoiceSetupInstructions = Afin de permettre au module Geminvoice de lire vos factures depuis Google Drive et de les analyser avec l'Intelligence Artificielle de Google Gemini, vous devez suivre ces étapes :\n1. Créez un projet sur <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>.\n2. Activez les APIs "<b>Google Drive API</b>" et "<b>Generative Language API</b>" dans Bibliothèque d'API.\n3. Créez une "Clé API" (API Key) dans la section Identifiants. Renseignez cette clé dans le champ "Clé API Google Gemini" ci-dessous.\n4. Créez un "Compte de service" (Service Account), générez une clé au format JSON, et téléchargez-la. Ouvrez le fichier téléchargé et copiez tout son contenu (texte brut JSON) dans le champ "Compte de Service Google (JSON)" ci-dessous.\n5. Allez sur votre dossier "Scan Factures" dans Google Drive, cliquez sur "Partager", et ajoutez l'adresse email de votre Compte de service (qui termine par @votre-projet.iam.gserviceaccount.com) en lui donnant le rôle d'Éditeur.\n6. Copiez l'ID du dossier se trouvant dans la barre d'adresse (ex: google.com/drive/folders/<i>1ABC2DEF3GHI</i>) dans le champ "ID du dossier Google Drive".

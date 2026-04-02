@@ -2,7 +2,7 @@
 /**
  *  \file       ajax/product_search.php
  *  \ingroup    geminvoice
- *  \brief      AJAX endpoint — search llx_product for Select2 autocomplete (Alpha12)
+ *  \brief      AJAX endpoint — search llx_product for Select2 autocomplete (Beta 1)
  *
  *  GET params:
  *    term   (string)  Search string matched against ref and label (min 2 chars)

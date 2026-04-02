@@ -2,6 +2,13 @@
 
 Toutes les évolutions majeures du module Geminvoice par phase de développement.
 
+## [V1.0.0 beta 1] - 2026-04-02
+### Release Candidate
+- **Geminvoice Alpha Cycle Completed** : Stabilisation de l'architecture multi-source (GDrive, Upload, Factur-X, PDP).
+- **Intelligence Comptable** : Cascade de reconnaissance à 6 niveaux (Règles → Textmatch → Gemini AI → Fallbacks).
+- **Sécurité & Robustesse** : Protection XXE, CSRF, et injection de prompt. Audit complet des types de données et atomicité des transactions.
+- **Prêt pour la production** : Intégration Cron, mémorisation automatique et interface de révision unifiée.
+
 ## [Alpha 18] - 2026-03-28 (release candidate)
 
 ### Sécurité
